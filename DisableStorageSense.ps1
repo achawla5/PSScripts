@@ -1,4 +1,4 @@
-﻿Write-Host'*** WVD AIB CUSTOMIZER PHASE *** Disable Storage Sense ***'
+﻿Write-Host '*** WVD AIB CUSTOMIZER PHASE *** Disable Storage Sense ***'
 
 $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense"
 $name = "AllowStorageSenseGlobal"
@@ -9,4 +9,4 @@ IF(!(Test-Path $registryPath)) {
 }
 
 New-ItemProperty -Path $registryPath -Name $name -Value $value -PropertyType DWORD -Force | Out-Null
-Write-Host'*** WVD AIB CUSTOMIZER PHASE *** Disable Storage Sense *** - Exit Code: '$LASTEXITCODE
+Write-Host '*** WVD AIB CUSTOMIZER PHASE *** Disable Storage Sense *** - Exit Code: '$LASTEXITCODE
