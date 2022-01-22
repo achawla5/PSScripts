@@ -8,5 +8,5 @@ IF(!(Test-Path $registryPath)) {
     New-Item -Path $TimeZoneRegistryPath -Force | Out-Null
 }
 
-New-ItemProperty -Path $TimeZoneRegistryPath -Name $TimeZoneRegName -Value $value -PropertyType DWORD -Force | Out-Null
+New-ItemProperty -Path $TimeZoneRegistryPath -Name $TimeZoneRegName -Value $TimeZoneRegValue -PropertyType DWORD -Force | Out-Null
 Write-Host '*** WVD AIB CUSTOMIZER PHASE *** Timezone redirection *** - Exit Code: '$LASTEXITCODE
