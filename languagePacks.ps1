@@ -94,7 +94,7 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
 
             $langDrive.Value = ($langMount | Get-Volume).DriveLetter+":"
             $fodPath.Value = ($fodMount | Get-Volume).DriveLetter+":"
-            $langPackPath.Value = $langDrive+"\x64\langpacks"
+            $langPackPath.Value = $langDrive.Value+"\x64\langpacks"
 
         }
 
