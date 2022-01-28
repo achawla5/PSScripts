@@ -340,6 +340,7 @@ function Install-LanguagePack {
                 continue
             }
             Write-Verbose "Installed $code"
+            shutdown /r
         }
     } #Process
     END {
