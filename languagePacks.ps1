@@ -35,7 +35,7 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
 
     Process {
 
-        if($version -like "Windows 11") {
+        if($version -like "11") {
         
             $langIsoUrl = 'https://software-download.microsoft.com/download/sg/22000.1.210604-1628.co_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso'
             $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/22000.194.210911-1543.co_release_svc_prod1_amd64fre_InboxApps.iso'
@@ -83,14 +83,13 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
 
             # Starting ISO downloads
             Invoke-WebRequest -Uri $langIsoUrl -OutFile $langOutputPath
-            # Write-host 'AIB Customization: Finished Download for Language ISO for ' + $version
+            Write-host 'AIB Customization: Finished Download for Language ISO for ' + $version
 
             Invoke-WebRequest -Uri $fodIsoUrl -OutFile $fodOutputPath
-            # Write-host 'AIB Customization: Finished Download for Feature on Demand (FOD) Disk 1 for ' $version
+            Write-host 'AIB Customization: Finished Download for Feature on Demand (FOD) Disk 1 for ' $version
 
             $langMount = Mount-DiskImage -ImagePath $langOutputPath
             $fodMount = Mount-DiskImage -ImagePath $fodOutputPath
-            #$inboxAppsMount = Mount-DiskImage -ImagePath $inboxAppsOutputPath
 
             $langDrive.Value = ($langMount | Get-Volume).DriveLetter+":"
             $fodPath.Value = ($fodMount | Get-Volume).DriveLetter+":"
@@ -98,9 +97,11 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
 
         }
 
-        #Invoke-WebRequest -Uri $inboxAppsIsoUrl -OutFile $inboxAppsOutputPath
-        #$inboxAppsMount = Mount-DiskImage -ImagePath $inboxAppsOutputPath
-        # Write-host 'AIB Customization: Finished Download for Inbox App ISO ' $version
+        Invoke-WebRequest -Uri $inboxAppsIsoUrl -OutFile $inboxAppsOutputPath
+        $inboxAppsMount = Mount-DiskImage -ImagePath $inboxAppsOutputPath
+        Write-host 'AIB Customization: Finished Download for Inbox App ISO ' $version
+
+        $inboxAppsDrive.Value = ($inboxAppsMount | Get-Volume).DriveLetter+":"
 
     }
 
@@ -324,6 +325,7 @@ function Install-LanguagePack {
                 }
             }
         
+            # try setting default language
             try {
                 $LanguageList = Get-WinUserLanguageList -ErrorAction Stop
                 $LanguageList.Add("$code") 
@@ -336,6 +338,32 @@ function Install-LanguagePack {
                 $error[0]
                 continue
             }
+
+
+            # Update Inbox Apps
+            # reference https://docs.microsoft.com/en-us/azure/virtual-desktop/language-packs
+
+            foreach ($App in (Get-AppxProvisionedPackage -Online)) {
+                $AppPath = $inboxAppsDrive + $App.DisplayName + '_' + $App.PublisherId
+                Write-Host "Handling $AppPath"
+                $licFile = Get-Item $AppPath*.xml
+                if ($licFile.Count) {
+                    $lic = $true
+                    $licFilePath = $licFile.FullName
+                } else {
+                    $lic = $false
+                }
+                $appxFile = Get-Item $AppPath*.appx*
+                if ($appxFile.Count) {
+                    $appxFilePath = $appxFile.FullName
+                    if ($lic) {
+                        Add-AppxProvisionedPackage -Online -PackagePath $appxFilePath -LicensePath $licFilePath 
+                    } else {
+                        Add-AppxProvisionedPackage -Online -PackagePath $appxFilePath -skiplicense
+                    }
+                }
+            }
+
             Write-Verbose "Installed $code"
             shutdown /r
         }
