@@ -271,12 +271,10 @@ function Install-LanguagePack {
             #From the local experience iso
             $appxPath = "$contentPath\LanguageExperiencePack.$code.Neutral.appx"
             if (-not (Test-Path $appxPath)) {
-                Write-Error "Could not validate that $appxPath file exists in this location"
-                continue
+                Write-Verbose "Could not validate that $appxPath file exists in this location"
             }
             if (-not (Test-Path "$contentPath\License.xml")) {
-                Write-Error "Could not validate that $contentPath\License.xml file exists in this location"
-                continue
+                Write-Verbose "Could not validate that $contentPath\License.xml file exists in this location"
             }
 
             <#
