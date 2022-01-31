@@ -41,7 +41,7 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
             $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/22000.194.210911-1543.co_release_svc_prod1_amd64fre_InboxApps.iso'
 
             # Starting ISO downloads
-            #Invoke-WebRequest -Uri $langIsoUrl -OutFile $langOutputPath
+            Invoke-WebRequest -Uri $langIsoUrl -OutFile $langOutputPath
             # Write-host 'AIB Customization: Finished Download for Language ISO for ' + $version
 
             # Mount ISOs
@@ -170,10 +170,6 @@ function Install-LanguagePack {
         $LocalPath = $drive + $appName
         Set-Location $LocalPath
 
-        $langIsoUrlIso = 'ClientLangPack.iso'
-        $fodIsoUrlIso = 'FOD.iso'
-        $inboxAppsIsoUrlIso = 'InboxApps.iso'
-
         $languagesDict = @{}
         $languagesDict.Add("Arabic (Saudi Arabia)", "ar-SA")
         $languagesDict.Add("Basque (Basque)", "eu-ES")
@@ -183,7 +179,8 @@ function Install-LanguagePack {
         $languagesDict.Add("Chinese (Simplified, China)", "zh-CN")
         $languagesDict.Add("Chinese (Traditional, Taiwan)", "zh-TW")
         $languagesDict.Add("Croatian (Croatia)",	"hr-HR")
-        $languagesDict.Add("Spanish (Spain)",	"es-ES")
+        $languagesDict.Add("Spanish (Spain)",	"es-ES")
+
    
 
         # download lang ISOs and FOD ISOs based on windows version
@@ -274,11 +271,11 @@ function Install-LanguagePack {
             $appxPath = "$contentPath\LanguageExperiencePack.$code.Neutral.appx"
             if (-not (Test-Path $appxPath)) {
                 Write-Error "Could not validate that $appxPath file exists in this location"
-                break
+                continue
             }
             if (-not (Test-Path "$contentPath\License.xml")) {
                 Write-Error "Could not validate that $contentPath\License.xml file exists in this location"
-                break
+                continue
             }
 
             <#
