@@ -5,7 +5,6 @@
             ValuefromPipeline = $true,
             Mandatory = $true
         )]
-        [ValidateSet('af-za', 'am-et', 'ar-sa', 'as-in', 'az-latn-az', 'be-by', 'bg-bg', 'bn-bd', 'bn-in', 'bs-latn-ba', 'ca-es', 'ca-es-valencia', 'chr-cher-us', 'cs-cz', 'cy-gb', 'da-dk', 'de-de', 'el-gr', 'en-gb', 'en-us', 'es-es', 'es-mx', 'et-ee', 'eu-es', 'fa-ir', 'fi-fi', 'fil-ph', 'fr-ca', 'fr-fr', 'ga-ie', 'gd-gb', 'gl-es', 'gu-in', 'ha-latn-ng', 'he-il', 'hi-in', 'hr-hr', 'hu-hu', 'hy-am', 'id-id', 'ig-ng', 'is-is', 'it-it', 'ja-jp', 'ka-ge', 'kk-kz', 'km-kh', 'kn-in', 'kok-in', 'ko-kr', 'ku-arab-iq', 'ky-kg', 'lb-lu', 'lo-la', 'lt-lt', 'lv-lv', 'mi-nz', 'mk-mk', 'ml-in', 'mn-mn', 'mr-in', 'ms-my', 'mt-mt', 'nb-no', 'ne-np', 'nl-nl', 'nn-no', 'nso-za', 'or-in', 'pa-arab-pk', 'pa-in', 'pl-pl', 'prs-af', 'pt-br', 'pt-pt', 'quc-latn-gt', 'quz-pe', 'ro-ro', 'ru-ru', 'rw-rw', 'sd-arab-pk', 'si-lk', 'sk-sk', 'sl-si', 'sq-al', 'sr-cyrl-ba', 'sr-cyrl-rs', 'sr-latn-rs', 'sv-se', 'sw-ke', 'ta-in', 'te-in', 'tg-cyrl-tj', 'th-th', 'ti-et', 'tk-tm', 'tn-za', 'tr-tr', 'tt-ru', 'ug-cn', 'uk-ua', 'ur-pk', 'uz-latn-uz', 'vi-vn', 'wo-sn', 'xh-za', 'yo-ng', 'zh-cn', 'zh-tw', 'zu-za')]
         [System.String[]]$LanguageCode,
 
         [Parameter(Mandatory)]
@@ -35,6 +34,7 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
 
     Process {
 
+        # Windows 11
         if($version -like "11") {
         
             $langIsoUrl = 'https://software-download.microsoft.com/download/sg/22000.1.210604-1628.co_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso'
@@ -53,6 +53,7 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
             $fodPath.Value = $langDrive.Value+"\LanguagesAndOptionalFeatures"
 
         }  
+        # Windows 10 - supported versions: 1903, 1909, 2004, 20H2, 21H1, 21H2
         else {
         
             if($version -like "1903" -or $version -like "1909") {
@@ -114,41 +115,20 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
 
 function Install-LanguagePack {
   
+   
     <#
     .SYNOPSIS
-    Function to install language packs along with features on demand,
+    Function to install language packs along with features on demand and inbox apps
 
     .DESCRIPTION
-    This PowerShell function is designed to automate the installation of language packs with their respective features on demand.  Not all languages have all features available to them, but this function will install all available. 
-    This supports Windows 10 single and multisession, along with Windows 11.
+    Based on the language parameter, this function installs language packs along with the necessary features on demand (FOD) and inbox apps. Not all FODs are available for each language - this function
+    will install the FODs based on the mapping here: https://raw.githubusercontent.com/achawla5/PSScripts/main/Windows-10-1809-FOD-to-LP-Mapping-Table.csv
 
-    You will need 3 external resources for this script to run:
+    // add supported languages
 
-    The excel file from 'Language and region Features on Demand' documentation **saved as a csv file**.  This is needed as it shows what features are available for each language.  I'd prefer an API or the ability to daownload a CSV, but I guess we work with what we've got so you've got to download the xlsx file and save it as a csv.
-    https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/features-on-demand-language-fod
-
-    As long as the structure of the iso files and format of the excel file stay the same, this function will work for future language updates.
-
-    *currently supported languages: 'af-za', 'am-et', 'ar-sa', 'as-in', 'az-latn-az', 'be-by', 'bg-bg', 'bn-bd', 'bn-in', 'bs-latn-ba', 'ca-es', 'ca-es-valencia', 'chr-cher-us', 'cs-cz', 'cy-gb', 'da-dk', 'de-de', 'el-gr', 'en-gb', 'en-us', 'es-es', 'es-mx', 'et-ee', 'eu-es', 'fa-ir', 'fi-fi', 'fil-ph', 'fr-ca', 'fr-fr', 'ga-ie', 'gd-gb', 'gl-es', 'gu-in', 'ha-latn-ng', 'he-il', 'hi-in', 'hr-hr', 'hu-hu', 'hy-am', 'id-id', 'ig-ng', 'is-is', 'it-it', 'ja-jp', 'ka-ge', 'kk-kz', 'km-kh', 'kn-in', 'kok-in', 'ko-kr', 'ku-arab-iq', 'ky-kg', 'lb-lu', 'lo-la', 'lt-lt', 'lv-lv', 'mi-nz', 'mk-mk', 'ml-in', 'mn-mn', 'mr-in', 'ms-my', 'mt-mt', 'nb-no', 'ne-np', 'nl-nl', 'nn-no', 'nso-za', 'or-in', 'pa-arab-pk', 'pa-in', 'pl-pl', 'prs-af', 'pt-br', 'pt-pt', 'quc-latn-gt', 'quz-pe', 'ro-ro', 'ru-ru', 'rw-rw', 'sd-arab-pk', 'si-lk', 'sk-sk', 'sl-si', 'sq-al', 'sr-cyrl-ba', 'sr-cyrl-rs', 'sr-latn-rs', 'sv-se', 'sw-ke', 'ta-in', 'te-in', 'tg-cyrl-tj', 'th-th', 'ti-et', 'tk-tm', 'tn-za', 'tr-tr', 'tt-ru', 'ug-cn', 'uk-ua', 'ur-pk', 'uz-latn-uz', 'vi-vn', 'wo-sn', 'xh-za', 'yo-ng', 'zh-cn', 'zh-tw', 'zu-za'
-
-    .PARAMETER LanguageCode
-    This is the language code for your language the full list of available codes is in the description.  The parameter will only allow valid codes
-
-    .PARAMETER LPtoFODFile
-    This is the path to the csv version of the excel file from 'Language and region Features on Demand' documentation.  You can find it here: https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/features-on-demand-language-fod.
-    The default value for this parameter is Windows-10-1809-FOD-to-LP-Mapping-Table.csv
-
+    // add examples
     .EXAMPLE
     
-
-    .EXAMPLE 
-    
-
-    .EXAMPLE
-    
-
-    .EXAMPLE
-   
 
     #>
 
@@ -171,6 +151,7 @@ function Install-LanguagePack {
         $LocalPath = $drive + $appName
         Set-Location $LocalPath
 
+        # populate dictionary
         $languagesDict = @{}
         $languagesDict.Add("Arabic (Saudi Arabia)", "ar-SA")
         $languagesDict.Add("Basque (Basque)", "eu-ES")
@@ -180,9 +161,43 @@ function Install-LanguagePack {
         $languagesDict.Add("Chinese (Simplified, China)", "zh-CN")
         $languagesDict.Add("Chinese (Traditional, Taiwan)", "zh-TW")
         $languagesDict.Add("Croatian (Croatia)",	"hr-HR")
+        $languagesDict.Add("Czech (Czech Republic)",	"cs-CZ")
+        $languagesDict.Add("Danish (Denmark)",	"da-DK")
+        $languagesDict.Add("Dutch (Netherlands)",	"nl-NL")
+        $languagesDict.Add("English (United States)",	"en-US")
+        $languagesDict.Add("English (United Kingdom)",	"en-GB")
+        $languagesDict.Add("Estonian (Estonia)",	"et-EE")
+        $languagesDict.Add("Finnish (Finland)",	"fi-FI")
+        $languagesDict.Add("French (Canada)",	"fr-CA")
+        $languagesDict.Add("French (France)",	"fr-FR")
+        $languagesDict.Add("Galician",	"gl-ES")
+        $languagesDict.Add("German (Germany)",	"de-DE")
+        $languagesDict.Add("Greek (Greece)",	"el-GR")
+        $languagesDict.Add("Hebrew (Israel)",	"he-IL")
+        $languagesDict.Add("Hungarian (Hungary)",	"hu-HU")
+        $languagesDict.Add("Indonesian (Indonesia)",	"id-ID")
+        $languagesDict.Add("Italian (Italy)",	"it-IT")
+        $languagesDict.Add("Japanese (Japan)",	"ja-JP")
+        $languagesDict.Add("Korean (Korea)",	"ko-KR")
+        $languagesDict.Add("Latvian (Latvia)",	"lv-LV")
+        $languagesDict.Add("Lithuanian (Lithuania)",	"lt-LT")
+        $languagesDict.Add("Norwegian, Bokmål (Norway)",	"nb-NO")
+        $languagesDict.Add("Polish (Poland)",	"pl-PL")
+        $languagesDict.Add("Portuguese (Brazil)",	"pt-BR")
+        $languagesDict.Add("Portuguese (Portugal)",	"pt-PT")
+        $languagesDict.Add("Romanian (Romania)",	"ro-RO")
+        $languagesDict.Add("Russian (Russia)",	"ru-RU")
+        $languagesDict.Add("Serbian (Latin, Serbia)",	"sr-Latn-RS")
+        $languagesDict.Add("Slovak (Slovakia)",	"sk-SK")
+        $languagesDict.Add("Slovenian (Slovenia)",	"sl-SI")
+        $languagesDict.Add("Spanish (Mexico)",	"es-MX")
         $languagesDict.Add("Spanish (Spain)",	"es-ES")
+        $languagesDict.Add("Swedish (Sweden)",	"sv-SE")
+        $languagesDict.Add("Thai (Thailand)",	"th-TH")
+        $languagesDict.Add("Turkish (Turkey)",	"tr-TR")
+        $languagesDict.Add("Ukrainian (Ukraine)",	"uk-UA")
+        $languagesDict.Add("Vietnamese",	"vi-VN")
 
-   
 
         # download lang ISOs and FOD ISOs based on windows version
         $fodPath = "undefined"
