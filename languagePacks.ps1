@@ -102,7 +102,7 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
         $inboxAppsMount = Mount-DiskImage -ImagePath $inboxAppsOutputPath
         Write-host 'AIB Customization: Finished Download for Inbox App ISO ' $version
 
-        $inboxAppsDrive.Value = ($inboxAppsMount | Get-Volume).DriveLetter+":"
+        $inboxAppDrive.Value = ($inboxAppsMount | Get-Volume).DriveLetter+":"
 
     }
 
@@ -357,7 +357,7 @@ function Install-LanguagePack {
             # reference https://docs.microsoft.com/en-us/azure/virtual-desktop/language-packs
 
             foreach ($App in (Get-AppxProvisionedPackage -Online)) {
-                $AppPath = $inboxAppsDrive + $App.DisplayName + '_' + $App.PublisherId
+                $AppPath = $inboxAppDrive + $App.DisplayName + '_' + $App.PublisherId
                 Write-Host "Handling $AppPath"
                 $licFile = Get-Item $AppPath*.xml
                 if ($licFile.Count) {
