@@ -5,7 +5,7 @@
             "publisher": "MicrosoftWindowsDesktop",
             "sku": "20h1-ent",
             "type": "PlatformImage",
-            "version": "latest (19041.1415.2112101053)"
+            "version": "19041.1415.2112101053"
         },
         "customize": [
             {
