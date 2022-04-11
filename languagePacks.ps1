@@ -11,6 +11,13 @@
         [string]$version
     )
 
+
+function Get-TimeStamp {
+    
+    return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
+    
+}
+
 function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppDrive, [ref] $langPackPath) {
 
     Begin {
@@ -85,9 +92,11 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
             # Starting ISO downloads
             Invoke-WebRequest -Uri $langIsoUrl -OutFile $langOutputPath
             Write-host 'AIB Customization: Finished Download for Language ISO for ' + $version
+            Get-TimeStamp
 
             Invoke-WebRequest -Uri $fodIsoUrl -OutFile $fodOutputPath
             Write-host 'AIB Customization: Finished Download for Feature on Demand (FOD) Disk 1 for ' $version
+            Get-TimeStamp
 
             $langMount = Mount-DiskImage -ImagePath $langOutputPath
             $fodMount = Mount-DiskImage -ImagePath $fodOutputPath
@@ -101,6 +110,7 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
         Invoke-WebRequest -Uri $inboxAppsIsoUrl -OutFile $inboxAppsOutputPath
         $inboxAppsMount = Mount-DiskImage -ImagePath $inboxAppsOutputPath
         Write-host 'AIB Customization: Finished Download for Inbox App ISO ' $version
+        Get-TimeStamp
 
         $inboxAppDrive.Value = ($inboxAppsMount | Get-Volume).DriveLetter+":"
 
@@ -144,6 +154,7 @@ function Install-LanguagePack {
         #Code mapping from https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/features-on-demand-language-fod
 
         write-host 'AIB Customization: Download Language ISO, Feature on Demand (FOD) Disk 1, and Inbox Apps ISO'
+        Get-TimeStamp
 
         $appName = 'languagePacks'
         $drive = 'C:\'
@@ -381,7 +392,8 @@ function Install-LanguagePack {
         }
     } #Process
     END {
-        
+        Write-Host "Finished with language packs customization"
+        Get-TimeStamp
     } #End
 }  #function Install-LanguagePack
 
