@@ -1,12 +1,35 @@
-﻿Write-Host '*** WVD AIB CUSTOMIZER PHASE *** Disable Storage Sense ***'
+﻿<#Author       : Akash Chawla
+# Usage        : Disable Storage Sense
+#>
+
+#######################################
+#    Disable Storage Sense            #
+#######################################
+
+$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Disable Storage Sense Start -  $((Get-Date).ToUniversalTime()) "
 
 $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense"
-$name = "AllowStorageSenseGlobal"
-$value = "0"
+$registryKey = "AllowStorageSenseGlobal"
+$registryValue = "0"
 
 IF(!(Test-Path $registryPath)) {
-    New-Item -Path $registryPath -Force | Out-Null
+    New-Item -Path $registryPath -Force
 }
 
-New-ItemProperty -Path $registryPath -Name $name -Value $value -PropertyType DWORD -Force | Out-Null
-Write-Host '*** WVD AIB CUSTOMIZER PHASE *** Disable Storage Sense *** - Exit Code: '$LASTEXITCODE
+try {
+    New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
+}
+catch {
+     Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Disable Storage Sense - Cannot add the registry key $registryKey *** : [$($_.Exception.Message)]"
+     Write-Host "Message: [$($_.Exception.Message)"]
+}
+
+$stopwatch.Stop()
+$elapsedSeconds = $stopwatch.Elapsed.Seconds
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Disable Storage Sense - Exit Code: $LASTEXITCODE ***"
+Write-Host "*** Ending AVD AIB CUSTOMIZER PHASE: Disable Storage Sense - Time taken: $elapsedSeconds "
+
+#############
+#    END    #
+#############

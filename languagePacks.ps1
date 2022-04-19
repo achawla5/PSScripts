@@ -1,35 +1,38 @@
-﻿[CmdletBinding()]
+﻿<#Author       : Akash Chawla
+# Usage        : Install Language packs
+#>
+
+#######################################
+#    Install language packs           #
+#######################################
+
+
+[CmdletBinding()]
   Param (
         [Parameter(
-            ValuefromPipelineByPropertyName = $true,
-            ValuefromPipeline = $true,
-            Mandatory = $true
+            Mandatory
         )]
-        [System.String[]]$LanguageCode,
+        [System.String[]]$LanguageList,
 
-        [Parameter(Mandatory)]
-        [string]$version
+        [Parameter(
+            Mandatory
+        )]
+        [string]$WindowsVersion
     )
 
-
-function Get-TimeStamp {
-    
-    return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
-    
-}
-
-function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppDrive, [ref] $langPackPath) {
+function Set-Assets($WindowsVersion, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppDrive, [ref] $LangPackPath) {
 
     Begin {
-        Write-Verbose "In Begin block: Get-Assets"
-        
+     
+        # Set paths 
+
         $appName = 'languagePacks'
         $drive = 'C:\'
-        New-Item -Path $drive -Name $appName  -ItemType Directory -ErrorAction SilentlyContinue
+        New-Item -Path $drive -Name $appName -ItemType Directory -ErrorAction Stop
         $LocalPath = $drive + $appName
         Set-Location $LocalPath
 
-        $langIsoUrlIso = 'ClientLangPack.iso'
+        $langIsoUrlIso = 'LanguagePack.iso'
         $fodIsoUrlIso = 'FOD.iso'
         $inboxAppsIsoUrlIso = 'InboxApps.iso'
 
@@ -42,28 +45,26 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
     Process {
 
         # Windows 11
-        if($version -like "11") {
+        if($WindowsVersion -eq "Windows 11") {
         
             $langIsoUrl = 'https://software-download.microsoft.com/download/sg/22000.1.210604-1628.co_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso'
             $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/22000.194.210911-1543.co_release_svc_prod1_amd64fre_InboxApps.iso'
 
             # Starting ISO downloads
             Invoke-WebRequest -Uri $langIsoUrl -OutFile $langOutputPath
-            # Write-host 'AIB Customization: Finished Download for Language ISO for ' + $version
+            Write-host "AVD AIB Customization: Finished Download for Language ISO for $WindowsVersion : $((Get-Date).ToUniversalTime()) "
 
             # Mount ISOs
             $langMount = Mount-DiskImage -ImagePath $langOutputPath
             
             $langDrive.Value = ($langMount | Get-Volume).DriveLetter+":"
-            $langPackPath.Value = $langDrive.Value+"\LanguagesAndOptionalFeatures"
-
+            $LangPackPath.Value = $langDrive.Value+"\LanguagesAndOptionalFeatures"
             $fodPath.Value = $langDrive.Value+"\LanguagesAndOptionalFeatures"
-
         }  
-        # Windows 10 - supported versions: 1903, 1909, 2004, 20H2, 21H1, 21H2
+        # Windows 10 - supported versions: 1903, 1909, 2004 (20H1), 20H2, 21H1, 21H2
         else {
         
-            if($version -like "1903" -or $version -like "1909") {
+            if($WindowsVersion = "Windows 10 - 1903" -or $WindowsVersion -like "Windows 10 - 1909") {
  
                 $langIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_CLIENTLANGPACKDVD_OEM_MULTI.iso'
                 $fodIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_amd64fre_FOD-PACKAGES_OEM_PT1_amd64fre_MULTI.iso'
@@ -75,15 +76,15 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
                  $langIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.1.191206-1406.vb_release_CLIENTLANGPACKDVD_OEM_MULTI.iso'
                  $fodIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.1.191206-1406.vb_release_amd64fre_FOD-PACKAGES_OEM_PT1_amd64fre_MULTI.iso'
 
-                  if($version -eq "2004") {
+                  if($WindowsVersion -eq "Windows 10 - 20H1") {
 
                         $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.1.191206-1406.vb_release_amd64fre_InboxApps.iso'
 
-                   } elseif ($version -eq "20H2") {
+                   } elseif ($WindowsVersion -eq "Windows 10 - 20H2") {
 
                         $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.508.200905-1327.vb_release_svc_prod1_amd64fre_InboxApps.iso'
         
-                   } elseif ($version -eq "21H1" -or $version -eq "21H2") {
+                   } elseif ($WindowsVersion -eq "Windows 10 - 21H1" -or $WindowsVersion -eq "Windows 10 - 21H2") {
         
                         $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/sg/19041.928.210407-2138.vb_release_svc_prod1_amd64fre_InboxApps.iso'
                    } 
@@ -91,29 +92,25 @@ function Set-Assets($version, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppD
 
             # Starting ISO downloads
             Invoke-WebRequest -Uri $langIsoUrl -OutFile $langOutputPath
-            Write-host 'AIB Customization: Finished Download for Language ISO for ' + $version
-            Get-TimeStamp
+            Write-host "AVD AIB Customization: Finished Download for Language ISO for $WindowsVersion : $((Get-Date).ToUniversalTime()) "
 
             Invoke-WebRequest -Uri $fodIsoUrl -OutFile $fodOutputPath
-            Write-host 'AIB Customization: Finished Download for Feature on Demand (FOD) Disk 1 for ' $version
-            Get-TimeStamp
+            Write-host "AIB Customization: Finished Download for Feature on Demand (FOD) Disk 1 for $WindowsVersion : $((Get-Date).ToUniversalTime()) " 
 
             $langMount = Mount-DiskImage -ImagePath $langOutputPath
             $fodMount = Mount-DiskImage -ImagePath $fodOutputPath
 
             $langDrive.Value = ($langMount | Get-Volume).DriveLetter+":"
             $fodPath.Value = ($fodMount | Get-Volume).DriveLetter+":"
-            $langPackPath.Value = $langDrive.Value+"\x64\langpacks"
+            $LangPackPath.Value = $langDrive.Value+"\x64\langpacks"
 
         }
 
         Invoke-WebRequest -Uri $inboxAppsIsoUrl -OutFile $inboxAppsOutputPath
+        Write-host "AIB Customization: Finished Download for Inbox Apps for $WindowsVersion : $((Get-Date).ToUniversalTime()) " 
+
         $inboxAppsMount = Mount-DiskImage -ImagePath $inboxAppsOutputPath
-        Write-host 'AIB Customization: Finished Download for Inbox App ISO ' $version
-        Get-TimeStamp
-
         $inboxAppDrive.Value = ($inboxAppsMount | Get-Volume).DriveLetter+":"
-
     }
 
     End {
@@ -144,223 +141,115 @@ function Install-LanguagePack {
 
     BEGIN {
         
-        Set-StrictMode -Version Latest
-
-        #Requires -RunAsAdministrator
-
-        ##Disable Language Pack Cleanup## (do not re-enable)
+      $tim
+        
+        # Disable Language Pack Cleanup
         Disable-ScheduledTask -TaskPath "\Microsoft\Windows\AppxDeploymentClient\" -TaskName "Pre-staged app cleanup" | Out-Null
 
-        #Code mapping from https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/features-on-demand-language-fod
+        $fodPath = ""
+        $langDrive = ""
+        $LangPackPath = ""
+        $inboxAppDrive = ""
 
-        write-host 'AIB Customization: Download Language ISO, Feature on Demand (FOD) Disk 1, and Inbox Apps ISO'
-        Get-TimeStamp
-
-        $appName = 'languagePacks'
-        $drive = 'C:\'
-        New-Item -Path $drive -Name $appName  -ItemType Directory -ErrorAction SilentlyContinue
-        $LocalPath = $drive + $appName
-        Set-Location $LocalPath
-
-        # populate dictionary
-        $languagesDict = @{}
-        $languagesDict.Add("Arabic (Saudi Arabia)", "ar-SA")
-        $languagesDict.Add("Basque (Basque)", "eu-ES")
-        $languagesDict.Add("Bulgarian (Bulgaria)", "bg-BG")
-        $languagesDict.Add("Catalan", "ca-ES")
-        $languagesDict.Add("Chinese (Traditional, Hong Kong SAR)", "zh-HK")
-        $languagesDict.Add("Chinese (Simplified, China)", "zh-CN")
-        $languagesDict.Add("Chinese (Traditional, Taiwan)", "zh-TW")
-        $languagesDict.Add("Croatian (Croatia)",	"hr-HR")
-        $languagesDict.Add("Czech (Czech Republic)",	"cs-CZ")
-        $languagesDict.Add("Danish (Denmark)",	"da-DK")
-        $languagesDict.Add("Dutch (Netherlands)",	"nl-NL")
-        $languagesDict.Add("English (United States)",	"en-US")
-        $languagesDict.Add("English (United Kingdom)",	"en-GB")
-        $languagesDict.Add("Estonian (Estonia)",	"et-EE")
-        $languagesDict.Add("Finnish (Finland)",	"fi-FI")
-        $languagesDict.Add("French (Canada)",	"fr-CA")
-        $languagesDict.Add("French (France)",	"fr-FR")
-        $languagesDict.Add("Galician",	"gl-ES")
-        $languagesDict.Add("German (Germany)",	"de-DE")
-        $languagesDict.Add("Greek (Greece)",	"el-GR")
-        $languagesDict.Add("Hebrew (Israel)",	"he-IL")
-        $languagesDict.Add("Hungarian (Hungary)",	"hu-HU")
-        $languagesDict.Add("Indonesian (Indonesia)",	"id-ID")
-        $languagesDict.Add("Italian (Italy)",	"it-IT")
-        $languagesDict.Add("Japanese (Japan)",	"ja-JP")
-        $languagesDict.Add("Korean (Korea)",	"ko-KR")
-        $languagesDict.Add("Latvian (Latvia)",	"lv-LV")
-        $languagesDict.Add("Lithuanian (Lithuania)",	"lt-LT")
-        $languagesDict.Add("Norwegian, Bokmål (Norway)",	"nb-NO")
-        $languagesDict.Add("Polish (Poland)",	"pl-PL")
-        $languagesDict.Add("Portuguese (Brazil)",	"pt-BR")
-        $languagesDict.Add("Portuguese (Portugal)",	"pt-PT")
-        $languagesDict.Add("Romanian (Romania)",	"ro-RO")
-        $languagesDict.Add("Russian (Russia)",	"ru-RU")
-        $languagesDict.Add("Serbian (Latin, Serbia)",	"sr-Latn-RS")
-        $languagesDict.Add("Slovak (Slovakia)",	"sk-SK")
-        $languagesDict.Add("Slovenian (Slovenia)",	"sl-SI")
-        $languagesDict.Add("Spanish (Mexico)",	"es-MX")
-        $languagesDict.Add("Spanish (Spain)",	"es-ES")
-        $languagesDict.Add("Swedish (Sweden)",	"sv-SE")
-        $languagesDict.Add("Thai (Thailand)",	"th-TH")
-        $languagesDict.Add("Turkish (Turkey)",	"tr-TR")
-        $languagesDict.Add("Ukrainian (Ukraine)",	"uk-UA")
-        $languagesDict.Add("Vietnamese",	"vi-VN")
-
-
-        # download lang ISOs and FOD ISOs based on windows version
-        $fodPath = "undefined"
-        $langDrive = "undefined"
-        $langPackPath = "undefined"
-        $inboxAppDrive = "undefined"
-
-        Set-Assets -version ($version) -langDrive ([ref] $langDrive) -fodPath ([ref] $fodPath) -langPackPath ([ref] $langPackPath) -inboxAppDrive ([ref] $inboxAppDrive)
+        Set-Assets -version ($WindowsVersion) -langDrive ([ref] $langDrive) -fodPath ([ref] $fodPath) -langPackPath ([ref] $LangPackPath) -inboxAppDrive ([ref] $inboxAppDrive)
 
         Invoke-WebRequest https://raw.githubusercontent.com/achawla5/PSScripts/main/Windows-10-1809-FOD-to-LP-Mapping-Table.csv  -OutFile .\LPtoFODFile.csv
 
         $LPtoFODFile = ".\LPtoFODFile.csv"
 
-        #Check for code mapping file
+        #Check for Language mapping file
         if (-not (Test-Path $LPtoFODFile )) {
             Write-Error "Could not validate that $LPtoFODFile file exists in this location"
             exit
         }
 
-        $codeMapping = Import-Csv $LPtoFODFile
+        $LPtoFODMapping = Import-Csv $LPtoFODFile
 
-        <#
-        if($version -eq "1903" -or $version -eq "1909") {
- 
-            $langIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_CLIENTLANGPACKDVD_OEM_MULTI.iso'
-            $fodIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_amd64fre_FOD-PACKAGES_OEM_PT1_amd64fre_MULTI.iso'
-            $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_amd64fre_InboxApps.iso'
-
-        } else {
-
-            $langIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.1.191206-1406.vb_release_CLIENTLANGPACKDVD_OEM_MULTI.iso'
-            $fodIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.1.191206-1406.vb_release_amd64fre_FOD-PACKAGES_OEM_PT1_amd64fre_MULTI.iso'
-
-            if($version -eq "2004") {
-
-                $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.1.191206-1406.vb_release_amd64fre_InboxApps.iso'
-
-            } elseif($version -eq "20H2") {
-
-                $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/19041.508.200905-1327.vb_release_svc_prod1_amd64fre_InboxApps.iso'
-        
-            } elseif($version -eq "21H1" -or $version -eq "21H2") {
-        
-                $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/sg/19041.928.210407-2138.vb_release_svc_prod1_amd64fre_InboxApps.iso'
-            } else {
-
-                # Windows 11
-
-                $inboxAppsIsoUrl = 'https://software-download.microsoft.com/download/pr/22000.194.210911-1543.co_release_svc_prod1_amd64fre_InboxApps.iso'
-            }
-        }
-
-
-        $langOutputPath = $LocalPath + '\' + $langIsoUrlIso
-        $fodOutputPath = $LocalPath + '\' + $fodIsoUrlIso
-        #$inboxAppsOutputPath = $LocalPath + '\' + $inboxAppsIsoUrlIso
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $langIsoUrl -OutFile $langOutputPath
-        write-host 'AIB Customization: Finished Download for Language ISO for ' + $version
-        Invoke-WebRequest -Uri $fodIsoUrl -OutFile $fodOutputPath
-        write-host 'AIB Customization: Finished Download for Feature on Demand (FOD) Disk 1 for Windows version ' $version
-
-        write-host 'AIB Customization: Mount ISOs'
-        $langMount = Mount-DiskImage -ImagePath $langOutputPath
-        $fodMount = Mount-DiskImage -ImagePath $fodOutputPath
-        #$inboxAppsMount = Mount-DiskImage -ImagePath $inboxAppsOutputPath
-
-        $langDrive = ($langMount | Get-Volume).DriveLetter+":"
-        $fodDrive = ($fodMount | Get-Volume).DriveLetter+":"
-        #$inboxAppsDrive = ($inboxAppsMount | Get-Volume).DriveLetter
-
-        $langPackPath = $langDrive+"\x64\langpacks"
-        write-host 'AIB Customization: Finished Mounting ISOs'
-        #>
-
-         # Disable Language Pack Cleanup
-        write-host 'AIB Customization: Disabling language pack cleanup task'
-        Disable-ScheduledTask -TaskPath "\Microsoft\Windows\AppxDeploymentClient\" -TaskName "Pre-staged app cleanup"
-
-
+         # populate dictionary
+         $LanguagesDictionary = @{}
+         $LanguagesDictionary.Add("Arabic (Saudi Arabia)", "ar-SA")
+         $LanguagesDictionary.Add("Basque (Basque)", "eu-ES")
+         $LanguagesDictionary.Add("Bulgarian (Bulgaria)", "bg-BG")
+         $LanguagesDictionary.Add("Catalan", "ca-ES")
+         $LanguagesDictionary.Add("Chinese (Traditional, Hong Kong SAR)", "zh-HK")
+         $LanguagesDictionary.Add("Chinese (Simplified, China)", "zh-CN")
+         $LanguagesDictionary.Add("Chinese (Traditional, Taiwan)", "zh-TW")
+         $LanguagesDictionary.Add("Croatian (Croatia)",	"hr-HR")
+         $LanguagesDictionary.Add("Czech (Czech Republic)",	"cs-CZ")
+         $LanguagesDictionary.Add("Danish (Denmark)",	"da-DK")
+         $LanguagesDictionary.Add("Dutch (Netherlands)",	"nl-NL")
+         $LanguagesDictionary.Add("English (United States)",	"en-US")
+         $LanguagesDictionary.Add("English (United Kingdom)",	"en-GB")
+         $LanguagesDictionary.Add("Estonian (Estonia)",	"et-EE")
+         $LanguagesDictionary.Add("Finnish (Finland)",	"fi-FI")
+         $LanguagesDictionary.Add("French (Canada)",	"fr-CA")
+         $LanguagesDictionary.Add("French (France)",	"fr-FR")
+         $LanguagesDictionary.Add("Galician",	"gl-ES")
+         $LanguagesDictionary.Add("German (Germany)",	"de-DE")
+         $LanguagesDictionary.Add("Greek (Greece)",	"el-GR")
+         $LanguagesDictionary.Add("Hebrew (Israel)",	"he-IL")
+         $LanguagesDictionary.Add("Hungarian (Hungary)",	"hu-HU")
+         $LanguagesDictionary.Add("Indonesian (Indonesia)",	"id-ID")
+         $LanguagesDictionary.Add("Italian (Italy)",	"it-IT")
+         $LanguagesDictionary.Add("Japanese (Japan)",	"ja-JP")
+         $LanguagesDictionary.Add("Korean (Korea)",	"ko-KR")
+         $LanguagesDictionary.Add("Latvian (Latvia)",	"lv-LV")
+         $LanguagesDictionary.Add("Lithuanian (Lithuania)",	"lt-LT")
+         $LanguagesDictionary.Add("Norwegian, Bokmål (Norway)",	"nb-NO")
+         $LanguagesDictionary.Add("Polish (Poland)",	"pl-PL")
+         $LanguagesDictionary.Add("Portuguese (Brazil)",	"pt-BR")
+         $LanguagesDictionary.Add("Portuguese (Portugal)",	"pt-PT")
+         $LanguagesDictionary.Add("Romanian (Romania)",	"ro-RO")
+         $LanguagesDictionary.Add("Russian (Russia)",	"ru-RU")
+         $LanguagesDictionary.Add("Serbian (Latin, Serbia)",	"sr-Latn-RS")
+         $LanguagesDictionary.Add("Slovak (Slovakia)",	"sk-SK")
+         $LanguagesDictionary.Add("Slovenian (Slovenia)",	"sl-SI")
+         $LanguagesDictionary.Add("Spanish (Mexico)",	"es-MX")
+         $LanguagesDictionary.Add("Spanish (Spain)",	"es-ES")
+         $LanguagesDictionary.Add("Swedish (Sweden)",	"sv-SE")
+         $LanguagesDictionary.Add("Thai (Thailand)",	"th-TH")
+         $LanguagesDictionary.Add("Turkish (Turkey)",	"tr-TR")
+         $LanguagesDictionary.Add("Ukrainian (Ukraine)",	"uk-UA")
+         $LanguagesDictionary.Add("Vietnamese",	"vi-VN")
     } # Begin
     PROCESS {
 
-        foreach ($code in $LanguageCode) {
-            $contentPath = Join-Path $langDrive (Join-Path 'LocalExperiencePack' $code)
-            #From the local experience iso
-            $appxPath = "$contentPath\LanguageExperiencePack.$code.Neutral.appx"
-            if (-not (Test-Path $appxPath)) {
-                Write-Verbose "Could not validate that $appxPath file exists in this location"
-            }
-            if (-not (Test-Path "$contentPath\License.xml")) {
-                Write-Verbose "Could not validate that $contentPath\License.xml file exists in this location"
-            }
+        foreach ($Language in $LanguageList) {
 
-            <#
-            try {
-                Add-AppProvisionedPackage -Online -PackagePath $appxPath -LicensePath "$contentPath\License.xml" -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null #ToDo enable logging  -LogPath 
-            }
-            catch {
-                $error[0]
-                break
-            }
-            #>
-
-            $langPackPath = "$langPackPath\Microsoft-Windows-Client-Language-Pack_x64_$code.cab"
+            $LanguageCode =  $LanguagesDictionary.$Language
+            
+            $LangPackPath = "$LangPackPath\Microsoft-Windows-Client-Language-Pack_x64_$LanguageCode.cab"
 
             try {
-                Add-WindowsPackage -Online -PackagePath $langPackPath -NoRestart -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
+                Add-WindowsPackage -Online -PackagePath $LangPackPath -NoRestart -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
             }
             catch {
-                $error[0]
+                Write-Host "AVD AIB Customization : Exception occured with language pack: $LangPackPath - [$($_.Exception.Message)]"
                 continue
             }
             
-            $fileList = $codeMapping | Where-Object { $_.'Target Lang' -eq $code }
+            $FeaturesList = $LPtoFODMapping | Where-Object { $_.'Target Lang' -eq $LanguageCode }
 
             #From the Features On Demand iso
 
-            if (($fileList | Measure-Object).Count -eq 0){
-                Write-Verbose "Installed $code"
-                break
-            }
-
-            foreach ($file in $fileList.'Cab Name') {
-                $filePath = Get-ChildItem (Join-Path $fodPath $file.replace('.cab', '*.cab'))
-
-                if ($null -eq $filePath) {
-                    Write-Error "Could not find $filePath"
-                    break
+            if (($FeaturesList | Measure-Object).Count -ne 0){
+                foreach ($file in $FeaturesList.'Cab Name') {
+                    $filePath = Get-ChildItem (Join-Path $fodPath $file.replace('.cab', '*.cab'))
+    
+                    if ($null -eq $filePath) {
+                        Write-Host "AVD AIB Customization : Could not find $filePath"
+                        break
+                    }
+    
+                    try {
+                        $PackageName = $filePath.FullName
+                        Add-WindowsPackage -Online -PackagePath $PackageName -NoRestart -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
+                    }
+                    catch {
+                        Write-Host "AVD AIB Customization : Exception occured while adding package $PackageName : [$($_.Exception.Message)]"
+                        continue
+                    }
                 }
-
-                try {
-                    Add-WindowsPackage -Online -PackagePath $filePath.FullName -NoRestart -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
-                }
-                catch {
-                    $error[0]
-                    continue
-                }
-            }
-        
-            # try setting default language
-            try {
-                $LanguageList = Get-WinUserLanguageList -ErrorAction Stop
-                $LanguageList.Add("$code") 
-                Set-WinUserLanguageList $LanguageList -force -ErrorAction Stop
-                Set-WinUILanguageOverride -Language $code
-                Set-WinSystemLocale $code
-                Set-Culture -CultureInfo $code
-            }
-            catch {
-                $error[0]
-                continue
             }
 
             # Update Inbox Apps
@@ -368,34 +257,35 @@ function Install-LanguagePack {
             $inboxAppPath = $inboxAppDrive + "\arm64fre\"
             foreach ($App in (Get-AppxProvisionedPackage -Online)) {
                 $AppPath = $inboxAppPath + $App.DisplayName + '_' + $App.PublisherId
-                Write-Host "Handling $AppPath"
                 $licFile = Get-Item $AppPath*.xml
-                if ($licFile.Count) {
-                    $lic = $true
-                    $licFilePath = $licFile.FullName
-                } else {
-                    $lic = $false
-                }
-                $appxFile = Get-Item $AppPath*.appx*
-                if ($appxFile.Count) {
-                    $appxFilePath = $appxFile.FullName
-                    if ($lic) {
-                        Add-AppxProvisionedPackage -Online -PackagePath $appxFilePath -LicensePath $licFilePath 
+
+                try {
+                    if ($licFile.Count) {
+                        $lic = $true
+                        $licFilePath = $licFile.FullName
                     } else {
-                        Add-AppxProvisionedPackage -Online -PackagePath $appxFilePath -skiplicense
+                        $lic = $false
                     }
+                    $appxFile = Get-Item $AppPath*.appx*
+                    if ($appxFile.Count) {
+                        $appxFilePath = $appxFile.FullName
+                        if ($lic) {
+                            Add-AppxProvisionedPackage -Online -PackagePath $appxFilePath -LicensePath $licFilePath -ErrorAction Stop
+                        } else {
+                            Add-AppxProvisionedPackage -Online -PackagePath $appxFilePath -skiplicense -ErrorAction Stop
+                        }
+                    }        
+                }
+                catch {
+                    Write-Host "AVD AIB Customization : Exception occured with inbox app package: $AppPath - [$($_.Exception.Message)]"
+                    continue;
                 }
             }
-
-            Write-Verbose "Installed $code"
-            shutdown /r
         }
     } #Process
     END {
-        Write-Host "Finished with language packs customization"
-        Get-TimeStamp
-    } #End
-}  #function Install-LanguagePack
+        Write-Host "AVD AIB Customization : Finished installing language packs: $((Get-Date).ToUniversalTime())"
+    } 
+}
 
-
- Install-LanguagePack -LanguageCode $LanguageCode -Version $version 
+ Install-LanguagePack -LanguageList $LanguageList -Version $WindowsVersion 

@@ -1,12 +1,35 @@
-﻿Write-Host '*** WVD AIB CUSTOMIZER PHASE *** Timezone redirection ***'
+﻿<#Author       : Akash Chawla
+# Usage        : Timezone redirection 
+#>
 
-$TimeZoneRegistryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-$TimeZoneRegName = "fEnableTimeZoneRedirection"
-$TimeZoneRegValue = "1"
+#######################################
+#    Timezone redirection             #
+#######################################
+
+$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Timezone redirection ***"
+
+$registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+$registryKey = "fEnableTimeZoneRedirection"
+$registryValue = "1"
 
 IF(!(Test-Path $registryPath)) {
-    New-Item -Path $TimeZoneRegistryPath -Force | Out-Null
+    New-Item -Path $registryPath -Force | Out-Null
 }
 
-New-ItemProperty -Path $TimeZoneRegistryPath -Name $TimeZoneRegName -Value $TimeZoneRegValue -PropertyType DWORD -Force | Out-Null
-Write-Host '*** WVD AIB CUSTOMIZER PHASE *** Timezone redirection *** - Exit Code: '$LASTEXITCODE
+try {
+    New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force | Out-Null
+}
+catch {
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Timezone redirection - Cannot add the registry key *** : [$($_.Exception.Message)]"
+    Write-Host "Message: [$($_.Exception.Message)"]
+}
+
+$stopwatch.Stop()
+$elapsedSeconds = $stopwatch.Elapsed.Seconds
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Timezone redirection -  Exit Code: $LASTEXITCODE ***"
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Timezone redirection - Time taken: $elapsedSeconds ***"
+
+#############
+#    END    #
+#############

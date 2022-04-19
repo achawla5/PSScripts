@@ -1,0 +1,93 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "imageTemplateName": {
+        "type": "string"
+        },
+        "api-version": {
+          "type": "string"
+        },
+        "svclocation": {
+            "type": "string"
+        }
+    },
+    
+    "variables": {
+    },
+
+
+    "resources": [
+      {
+        "name": "[parameters('imageTemplateName')]",
+        "type": "Microsoft.VirtualMachineImages/imageTemplates",
+        "apiVersion": "[parameters('api-version')]",
+        "location": "[parameters('svclocation')]",
+        "dependsOn": [],
+        "tags": {
+            "forAvd2": "true",
+            "imagebuilderTemplate": "AzureImageBuilderSIG",
+            "userIdentity": "enabled"
+                },
+            "identity": {
+                "type": "UserAssigned",
+                        "userAssignedIdentities": {
+                        "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourcegroups/akas-aib/providers/Microsoft.ManagedIdentity/userAssignedIdentities/akas-aibIdentity01": {}
+                            
+                    }
+                    },
+        
+        "properties": {
+            "buildTimeoutInMinutes" : 120,
+
+            "vmProfile": 
+                    {
+                    "vmSize": "Standard_D2_v2",
+                    "osDiskSizeGB": 127
+                    },
+        
+            "source": {
+                "type": "PlatformImage",
+                    "publisher": "MicrosoftWindowsDesktop",
+                    "offer": "windows-10",
+                    "sku": "20h1-ent",
+                    "version": "latest"
+            },
+            "customize": [
+                    {
+                        "type": "PowerShell",
+                        "name": "DisableStorageSense",
+                        "runElevated": true,
+                        "runAsSystem": true,
+                        "scriptUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/DisableStorageSense.ps1"
+                    }
+            ],
+            "distribute": 
+            [
+                {   
+                    "type": "SharedImage",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.1",
+                    "runOutputName": "aibimg04",
+                    "artifactTags": {
+                        "source": "wvd10",
+                        "baseosimg": "windows10"
+                    },
+                    "replicationRegions": [
+                      "westus2"
+
+                    ]
+                }
+            ]
+            }
+        }
+
+    
+    ]
+}    
+
+
+
+
+
+
+
