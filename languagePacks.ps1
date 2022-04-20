@@ -28,7 +28,7 @@ function Set-Assets($WindowsVersion, [ref] $langDrive, [ref] $fodPath, [ref] $in
 
         $appName = 'languagePacks'
         $drive = 'C:\'
-        New-Item -Path $drive -Name $appName -ItemType Directory -ErrorAction Stop
+        New-Item -Path $drive -Name $appName -ItemType Directory -ErrorAction SilentlyContinue
         $LocalPath = $drive + $appName
         Set-Location $LocalPath
 
@@ -64,7 +64,7 @@ function Set-Assets($WindowsVersion, [ref] $langDrive, [ref] $fodPath, [ref] $in
         # Windows 10 - supported versions: 1903, 1909, 2004 (20H1), 20H2, 21H1, 21H2
         else {
         
-            if($WindowsVersion = "Windows 10 - 1903" -or $WindowsVersion -like "Windows 10 - 1909") {
+            if($WindowsVersion = "Windows 10 - 1903" -or $WindowsVersion -eq "Windows 10 - 1909") {
  
                 $langIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_CLIENTLANGPACKDVD_OEM_MULTI.iso'
                 $fodIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_amd64fre_FOD-PACKAGES_OEM_PT1_amd64fre_MULTI.iso'
@@ -141,7 +141,8 @@ function Install-LanguagePack {
 
     BEGIN {
         
-      $tim
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        Write-host "Starting AVD AIB Customization: Install Language packs: $((Get-Date).ToUniversalTime()) "
         
         # Disable Language Pack Cleanup
         Disable-ScheduledTask -TaskPath "\Microsoft\Windows\AppxDeploymentClient\" -TaskName "Pre-staged app cleanup" | Out-Null
@@ -151,7 +152,7 @@ function Install-LanguagePack {
         $LangPackPath = ""
         $inboxAppDrive = ""
 
-        Set-Assets -version ($WindowsVersion) -langDrive ([ref] $langDrive) -fodPath ([ref] $fodPath) -langPackPath ([ref] $LangPackPath) -inboxAppDrive ([ref] $inboxAppDrive)
+        Set-Assets -WindowsVersion ($WindowsVersion) -langDrive ([ref] $langDrive) -fodPath ([ref] $fodPath) -langPackPath ([ref] $LangPackPath) -inboxAppDrive ([ref] $inboxAppDrive)
 
         Invoke-WebRequest https://raw.githubusercontent.com/achawla5/PSScripts/main/Windows-10-1809-FOD-to-LP-Mapping-Table.csv  -OutFile .\LPtoFODFile.csv
 
@@ -284,8 +285,12 @@ function Install-LanguagePack {
         }
     } #Process
     END {
-        Write-Host "AVD AIB Customization : Finished installing language packs: $((Get-Date).ToUniversalTime())"
+
+        $stopwatch.Stop()
+        $elapsedSeconds = $stopwatch.Elapsed.Seconds
+        Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs -  Exit Code: $LASTEXITCODE ***"    
+        Write-Host "Ending AVD AIB Customization : Install language packs - Time taken: $elapsedSeconds"
     } 
 }
 
- Install-LanguagePack -LanguageList $LanguageList -Version $WindowsVersion 
+ Install-LanguagePack -LanguageList $LanguageList -WindowsVersion $WindowsVersion 
