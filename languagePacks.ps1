@@ -64,7 +64,7 @@ function Set-Assets($WindowsVersion, [ref] $langDrive, [ref] $fodPath, [ref] $in
         # Windows 10 - supported versions: 1903, 1909, 2004 (20H1), 20H2, 21H1, 21H2
         else {
         
-            if($WindowsVersion = "Windows 10 - 1903" -or $WindowsVersion -eq "Windows 10 - 1909") {
+            if($WindowsVersion -eq "Windows 10 - 1903" -or $WindowsVersion -eq "Windows 10 - 1909") {
  
                 $langIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_CLIENTLANGPACKDVD_OEM_MULTI.iso'
                 $fodIsoUrl = 'https://software-download.microsoft.com/download/pr/18362.1.190318-1202.19h1_release_amd64fre_FOD-PACKAGES_OEM_PT1_amd64fre_MULTI.iso'
@@ -154,6 +154,10 @@ function Install-LanguagePack {
 
         Set-Assets -WindowsVersion ($WindowsVersion) -langDrive ([ref] $langDrive) -fodPath ([ref] $fodPath) -langPackPath ([ref] $LangPackPath) -inboxAppDrive ([ref] $inboxAppDrive)
 
+        #$langPackPath = "H:\x64\langpacks"
+        #$fodPath = "F:"
+        #$inboxAppDrive = "G:"
+        
         Invoke-WebRequest https://raw.githubusercontent.com/achawla5/PSScripts/main/Windows-10-1809-FOD-to-LP-Mapping-Table.csv  -OutFile .\LPtoFODFile.csv
 
         $LPtoFODFile = ".\LPtoFODFile.csv"
@@ -219,13 +223,13 @@ function Install-LanguagePack {
 
             $LanguageCode =  $LanguagesDictionary.$Language
             
-            $LangPackPath = "$LangPackPath\Microsoft-Windows-Client-Language-Pack_x64_$LanguageCode.cab"
+            $LanguagePackPath = "$LangPackPath\Microsoft-Windows-Client-Language-Pack_x64_$LanguageCode.cab"
 
             try {
-                Add-WindowsPackage -Online -PackagePath $LangPackPath -NoRestart -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
+                Add-WindowsPackage -Online -PackagePath $LanguagePackPath -NoRestart -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
             }
             catch {
-                Write-Host "AVD AIB Customization : Exception occured with language pack: $LangPackPath - [$($_.Exception.Message)]"
+                Write-Host "AVD AIB Customization : Exception occured with language pack: $LanguagePackPath - [$($_.Exception.Message)]"
                 continue
             }
             
