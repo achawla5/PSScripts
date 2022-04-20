@@ -27,9 +27,9 @@ catch {
 
 
 $stopwatch.Stop()
-$elapsedSeconds = $stopwatch.Elapsed.Seconds
+$elapsedTime = $stopwatch.Elapsed
 Write-Host "*** AVD AIB CUSTOMIZER PHASE: Screen capture protection - Exit Code: $LASTEXITCODE ***"
-Write-Host "*** AVD AIB CUSTOMIZER PHASE: Screen capture protection - Time taken: $elapsedSeconds ***"
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Screen capture protection - Time taken: $elapsedTime ***"
 
 
 #############

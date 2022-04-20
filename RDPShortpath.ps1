@@ -46,9 +46,9 @@ catch {
  
 
 $stopwatch.Stop()
-$elapsedSeconds = $stopwatch.Elapsed.Seconds
+$elapsedTime = $stopwatch.Elapsed
 Write-Host "*** AVD AIB CUSTOMIZER PHASE : Exit Code: $LASTEXITCODE ***"
-Write-Host "*** AVD AIB CUSTOMIZER PHASE: Configure RDP shortpath and Windows Defender Firewall - Time taken: $elapsedSeconds ***"
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Configure RDP shortpath and Windows Defender Firewall - Time taken: $elapsedTime ***"
  
 #############
 #    END    #

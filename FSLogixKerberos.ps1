@@ -50,9 +50,9 @@ catch {
 }
 
 $stopwatch.Stop()
-$elapsedSeconds = $stopwatch.Elapsed.Seconds
+$elapsedTime = $stopwatch.Elapsed
 Write-Host "*** AVD AIB CUSTOMIZER PHASE : Exit Code: $LASTEXITCODE ***"
-Write-Host "*** Ending AVD AIB CUSTOMIZER PHASE: Access to Azure File shares for FSLogix profiles - Time taken: $elapsedSeconds "
+Write-Host "*** Ending AVD AIB CUSTOMIZER PHASE: Access to Azure File shares for FSLogix profiles - Time taken: $elapsedTime "
 
 
 #############

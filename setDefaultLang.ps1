@@ -90,9 +90,9 @@ function Set-DefaultLanguage($language) {
 
   END {
       $stopwatch.Stop()
-      $elapsedSeconds = $stopwatch.Elapsed.Seconds
+      $elapsedTime = $stopwatch.Elapsed
       Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default language - Exit Code: $LASTEXITCODE ***"
-      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default language - Time taken: $elapsedSeconds ***"
+      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default language - Time taken: $elapsedTime ***"
   }
 }
 

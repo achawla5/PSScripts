@@ -26,9 +26,9 @@ catch {
 }
 
 $stopwatch.Stop()
-$elapsedSeconds = $stopwatch.Elapsed.Seconds
+$elapsedTime = $stopwatch.Elapsed
 Write-Host "*** AVD AIB CUSTOMIZER PHASE: Disable Storage Sense - Exit Code: $LASTEXITCODE ***"
-Write-Host "*** Ending AVD AIB CUSTOMIZER PHASE: Disable Storage Sense - Time taken: $elapsedSeconds "
+Write-Host "*** Ending AVD AIB CUSTOMIZER PHASE: Disable Storage Sense - Time taken: $elapsedTime "
 
 #############
 #    END    #

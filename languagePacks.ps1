@@ -291,9 +291,9 @@ function Install-LanguagePack {
     END {
 
         $stopwatch.Stop()
-        $elapsedSeconds = $stopwatch.Elapsed.Seconds
+        $elapsedTime = $stopwatch.Elapsed
         Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs -  Exit Code: $LASTEXITCODE ***"    
-        Write-Host "Ending AVD AIB Customization : Install language packs - Time taken: $elapsedSeconds"
+        Write-Host "Ending AVD AIB Customization : Install language packs - Time taken: $elapsedTime"
     } 
 }
 
