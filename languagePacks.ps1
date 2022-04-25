@@ -259,7 +259,7 @@ function Install-LanguagePack {
 
             # Update Inbox Apps
             # reference https://docs.microsoft.com/en-us/azure/virtual-desktop/language-packs
-            $inboxAppPath = $inboxAppDrive + "\arm64fre\"
+            $inboxAppPath = $inboxAppDrive + "\amd64fre\"
             foreach ($App in (Get-AppxProvisionedPackage -Online)) {
                 $AppPath = $inboxAppPath + $App.DisplayName + '_' + $App.PublisherId
                 $licFile = Get-Item $AppPath*.xml

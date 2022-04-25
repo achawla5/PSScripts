@@ -12,7 +12,7 @@
         [Parameter(
             Mandatory
         )]
-        [hashtable]$SessionTimeoutsDictionary
+        [string] $SessionTimeoutTypes
  )
 
  function ConvertToMilliSecond($timeInMinutes) {
@@ -25,7 +25,6 @@
     }
     catch {
          Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Configure session timeouts - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
-         Write-Host "Message: [$($_.Exception.Message)"]
     }
  }
 
@@ -44,43 +43,50 @@
     }
     PROCESS {
 
-        foreach($sessionTypes in $SessionTimeoutsDictionary) {
+        $SessionTimeoutsDictionary = ConvertFrom-StringData -StringData $SessionTimeoutTypes
 
-            $sessionTypeName = $sessionTypes.Name;
-            $sessionTypeValue = $sessionTypes.Value;
+        try {
+            foreach($sessionTypes in $SessionTimeoutsDictionary.GetEnumerator()) {
 
-            if($sessionTypeName -eq "EndSessionAtTimeLimit") {
+                $sessionTypeName = $($sessionTypes.Name);
+                $sessionTypeValue = $($sessionTypes.Value);
 
-                $registryKey = "fResetBroken"
-                $registryValue = "1"
-                Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
-            } else {
+                if($sessionTypeName -eq "EndSessionAtTimeLimit") {
 
-                $registryValue = ConvertToMilliSecond -time $sessionTypeValue
+                    $registryKey = "fResetBroken"
+                    $registryValue = "1"
+                    Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+                } else {
 
-                switch($sessionTypeName) {
+                    $registryValue = ConvertToMilliSecond -time $sessionTypeValue
+
+                    switch($sessionTypeName) {
     
-                    "DisconnectedSessions" {
-                        $registryKey = "MaxDisconnectionTime"
-                    }
+                        "DisconnectedSessions" {
+                            $registryKey = "MaxDisconnectionTime"
+                        }
     
-                    "ActiveButIdleSessions" {
-                        $registryKey = "MaxIdleTime"
-                    }
+                        "ActiveButIdleSessions" {
+                            $registryKey = "MaxIdleTime"
+                        }
     
-                    "ActiveSessions" {
-                        $registryKey = "MaxConnectionTime"
-                    }
+                        "ActiveSessions" {
+                            $registryKey = "MaxConnectionTime"
+                        }
     
-                    "LogOffSessions" {
-                        $registryKey = "RemoteAppLogoffTimeLimit"
+                        "LogOffSessions" {
+                            $registryKey = "RemoteAppLogoffTimeLimit"
 
+                        }
                     }
+
+                    Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
                 }
-
-                Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
             }
-        }    
+        }
+        catch {
+             Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Configure session timeouts - Error occured : [$($_.Exception.Message)]"
+        } 
     }
 
     END {
@@ -92,5 +98,5 @@
     }
  }
 
- Set-SessionTimeout -SessionTimeoutsDictionary $SessionTimeoutsDictionary
+ Set-SessionTimeout -SessionTimeoutTypes $SessionTimeoutTypes
 
