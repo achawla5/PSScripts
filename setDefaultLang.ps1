@@ -24,10 +24,7 @@ function Set-DefaultLanguage($language) {
       # populate dictionary
       $languagesDict = @{}
       $languagesDict.Add("Arabic (Saudi Arabia)", "0x0401")
-      $languagesDict.Add("Basque (Basque)", "0x042D")
       $languagesDict.Add("Bulgarian (Bulgaria)", "0x0402")
-      $languagesDict.Add("Catalan", "0x0403")
-      $languagesDict.Add("Chinese (Traditional, Hong Kong SAR)", "0x0C04")
       $languagesDict.Add("Chinese (Simplified, China)", "0x0804")
       $languagesDict.Add("Chinese (Traditional, Taiwan)", "0x0404")
       $languagesDict.Add("Croatian (Croatia)",	"0x041A")
@@ -40,7 +37,6 @@ function Set-DefaultLanguage($language) {
       $languagesDict.Add("Finnish (Finland)",	"0x040B")
       $languagesDict.Add("French (Canada)",	"0x0c0C")
       $languagesDict.Add("French (France)",	"0x040C")
-      $languagesDict.Add("Galician",	"0x0056")
       $languagesDict.Add("German (Germany)",	"0x0407")
       $languagesDict.Add("Greek (Greece)",	"0x0408")
       $languagesDict.Add("Hebrew (Israel)",	"0x040D")
@@ -66,7 +62,6 @@ function Set-DefaultLanguage($language) {
       $languagesDict.Add("Thai (Thailand)",	"0x041E")
       $languagesDict.Add("Turkish (Turkey)",	"0x041F")
       $languagesDict.Add("Ukrainian (Ukraine)",	"0x0422")
-      $languagesDict.Add("Vietnamese",	"0x042A")
 
       $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language"
       $registryKey = "InstallLanguage"
