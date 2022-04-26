@@ -63,7 +63,7 @@
                     },
                     {
                         "inline": [
-                             "C:\\ConfigureSessionTimeouts.ps1 -SessionTimeoutsDictionary \"EndSessionAtTimeLimit = 1 `n DisconnectedSessions = 5 `n ActiveSessions = 1 `n ActiveButIdleSessions = 10 `n LogOffSessions = 15\""
+                             "C:\\ConfigureSessionTimeouts.ps1 -SessionTimeoutTypes \"EndSessionAtTimeLimit = 1 `n DisconnectedSessions = 5 `n ActiveSessions = 1 `n ActiveButIdleSessions = 10 `n LogOffSessions = 15\""
                         ],
                         "name": "ConfigureSessionTimeoutsPowershell",
                         "runAsSystem": true,

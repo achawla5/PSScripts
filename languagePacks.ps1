@@ -173,10 +173,7 @@ function Install-LanguagePack {
          # populate dictionary
          $LanguagesDictionary = @{}
          $LanguagesDictionary.Add("Arabic (Saudi Arabia)", "ar-SA")
-         $LanguagesDictionary.Add("Basque (Basque)", "eu-ES")
          $LanguagesDictionary.Add("Bulgarian (Bulgaria)", "bg-BG")
-         $LanguagesDictionary.Add("Catalan", "ca-ES")
-         $LanguagesDictionary.Add("Chinese (Traditional, Hong Kong SAR)", "zh-HK")
          $LanguagesDictionary.Add("Chinese (Simplified, China)", "zh-CN")
          $LanguagesDictionary.Add("Chinese (Traditional, Taiwan)", "zh-TW")
          $LanguagesDictionary.Add("Croatian (Croatia)",	"hr-HR")
@@ -189,7 +186,6 @@ function Install-LanguagePack {
          $LanguagesDictionary.Add("Finnish (Finland)",	"fi-FI")
          $LanguagesDictionary.Add("French (Canada)",	"fr-CA")
          $LanguagesDictionary.Add("French (France)",	"fr-FR")
-         $LanguagesDictionary.Add("Galician",	"gl-ES")
          $LanguagesDictionary.Add("German (Germany)",	"de-DE")
          $LanguagesDictionary.Add("Greek (Greece)",	"el-GR")
          $LanguagesDictionary.Add("Hebrew (Israel)",	"he-IL")
@@ -215,7 +211,7 @@ function Install-LanguagePack {
          $LanguagesDictionary.Add("Thai (Thailand)",	"th-TH")
          $LanguagesDictionary.Add("Turkish (Turkey)",	"tr-TR")
          $LanguagesDictionary.Add("Ukrainian (Ukraine)",	"uk-UA")
-         $LanguagesDictionary.Add("Vietnamese",	"vi-VN")
+
     } # Begin
     PROCESS {
 
