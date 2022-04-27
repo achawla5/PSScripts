@@ -23,9 +23,9 @@ $ProgressPreference = 'SilentlyContinue'
         <Language ID="MatchOS" />
         <ExcludeApp ID="Groove" />
         <ExcludeApp ID="Lync" />
-        <Exclude ID="Word" />
-        <Exclude ID="PowerPoint" />
-        <Exclude ID="Teams" />
+        <ExcludeApp ID="Word" />
+        <ExcludeApp ID="PowerPoint" />
+        <ExcludeApp ID="Teams" />
     </Product>
   </Add>
     <Updates Enabled="FALSE" Channel="Monthly" />
