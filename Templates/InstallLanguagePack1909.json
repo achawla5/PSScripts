@@ -63,6 +63,7 @@
                     {
                         "inline": [
                             "C:\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\" -WindowsVersion \"Windows 10 - 1909\""
+                            
                         ],
                         "name": "LanguagePacksPowershell",
                         "runAsSystem": true,

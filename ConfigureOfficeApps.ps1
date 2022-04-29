@@ -12,7 +12,7 @@
     [Parameter(
         Mandatory
     )]
-    [ValidateSet("Word","PowerPoint","Access","Excel","OneNote","Outlook","Publisher","Neptune","Visio", "Publisher", "Skype")]
+    [ValidateSet("Word","PowerPoint","Access","Excel","OneNote","Outlook","Publisher","Visio", "Publisher", "Skype")]
     [System.String[]]$Applications,
 
     [Parameter(
@@ -24,7 +24,6 @@
         Mandatory
     )]
     [string]$Type
-
 )
 
 function AddProductsToConfigurationXML($Applications, $xmlFile, $xmlFilePath, $Version) {
@@ -52,6 +51,7 @@ function AddProductsToConfigurationXML($Applications, $xmlFile, $xmlFilePath, $V
         try {
             foreach ($app in $Applications) {
 
+                Write-Host " AVD AIB Customization Office apps: Request to add $app"
                 $productElement = $xmlFile.CreateElement("Product");
                 $languageElement = $xmlFile.CreateElement("Language")
                 $languageElement.setAttribute("ID", "MatchOS")
@@ -107,6 +107,7 @@ function RemoveProductsFromConfigurationXML($Applications, $xmlFile, $xmlFilePat
         try {
             foreach ($app in $Applications) {
 
+                Write-Host " AVD AIB Customization Office apps: Request to remove $app"
                 $excludeElement = $xmlFile.CreateElement("ExcludeApp")
                 $excludeElement.setAttribute("ID", $app);
                 $productElement.AppendChild($excludeElement)

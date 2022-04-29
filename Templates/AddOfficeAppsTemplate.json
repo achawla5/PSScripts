@@ -38,7 +38,7 @@
                     },
         
         "properties": {
-            "buildTimeoutInMinutes" : 120,
+            "buildTimeoutInMinutes" : 200,
 
             "vmProfile": 
                     {
@@ -62,7 +62,7 @@
                     },
                     {
                         "inline": [
-                            "C:\\OfficeApps.ps1 -Applications \"Word\", \"Access\", \"PowerPoint\" -Version \"64\" -Type \"Remove\""
+                            "C:\\OfficeApps.ps1 -Applications \"Visio\", \"Project\" -Version \"64\" -Type \"Add\""
                         ],
                         "name": "OfficeApps",
                         "runAsSystem": true,
@@ -74,7 +74,7 @@
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.20",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.21",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd10",
