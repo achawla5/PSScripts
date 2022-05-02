@@ -17,7 +17,7 @@ Param (
         [string]$ProfilePath,
 
     [Parameter(Mandatory=$false)]
-        [string]$vhdSize
+        [string]$VHDSize
 )
 
 ######################
@@ -102,8 +102,8 @@ $fslogix_deploy_status = Start-Process `
     -Wait `
     -Passthru
 
-if(!($PSBoundParameters.ContainsKey('vhdSize'))) {
-    $vhdSize = "30000"
+if(!($PSBoundParameters.ContainsKey('VHDSize'))) {
+    $VHDSize = "30000"
 }
 #######################################
 #    FSLogix User Profile Settings    #
@@ -135,7 +135,7 @@ Set-ItemProperty `
     -Path HKLM:\Software\FSLogix\Profiles `
     -Name "SizeInMBs" `
     -Type "Dword" `
-    -Value $vhdSize
+    -Value $VHDSize
 Set-ItemProperty `
     -Path HKLM:\Software\FSLogix\Profiles `
     -Name "IsDynamic" `

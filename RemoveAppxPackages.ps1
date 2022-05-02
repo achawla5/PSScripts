@@ -35,7 +35,8 @@
                     Get-AppxPackage -Name ("*{0}*" -f $App) | Remove-AppxPackage -ErrorAction SilentlyContinue  | Out-Null
 
                     if($App -eq "Microsoft.MSPaint") {
-                        DISM /Online /Remove-Capability /CapabilityName:Microsoft.Windows.MSPaint~~~~0.0.1.0
+                        $PaintWindowsName = "Microsoft.Windows.MSPaint"
+                        Get-WindowsCapability -Online -Name ("*{0}*" -f $PaintWindowsName) | Remove-WindowsCapability -Online -ErrorAction SilentlyContinue
                     }
                 }
                 catch {

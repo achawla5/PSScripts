@@ -1,5 +1,5 @@
 <#Author       : Akash Chawla
-# Usage        : Set default language 
+# Usage        : Set default Language 
 #>
 
 #######################################
@@ -10,10 +10,11 @@
 [CmdletBinding()]
   Param (
         [Parameter(Mandatory)]
-        [string]$language
+        [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)")]
+        [string]$Language
 )
 
-function Set-DefaultLanguage($language) {
+function Set-DefaultLanguage($Language) {
 
   BEGIN {
 
@@ -65,7 +66,7 @@ function Set-DefaultLanguage($language) {
 
       $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language"
       $registryKey = "InstallLanguage"
-      $registryValue = $languagesDict.$language 
+      $registryValue = $languagesDict.$Language 
 
       IF(!(Test-Path $registryPath)) {
         New-Item -Path $registryPath -Force | Out-Null
@@ -78,7 +79,7 @@ function Set-DefaultLanguage($language) {
         New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force | Out-Null
       }
       catch {
-        Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Set default language - Cannot add the registry key *** : [$($_.Exception.Message)]"
+        Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Set default Language - Cannot add the registry key *** : [$($_.Exception.Message)]"
         Write-Host "Message: [$($_.Exception.Message)"]
       }
   }
@@ -86,12 +87,12 @@ function Set-DefaultLanguage($language) {
   END {
       $stopwatch.Stop()
       $elapsedTime = $stopwatch.Elapsed
-      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default language - Exit Code: $LASTEXITCODE ***"
-      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default language - Time taken: $elapsedTime ***"
+      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exit Code: $LASTEXITCODE ***"
+      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Time taken: $elapsedTime ***"
   }
 }
 
-Set-DefaultLanguage -Language $language
+Set-DefaultLanguage -Language $Language
 
 #############
 #    END    #

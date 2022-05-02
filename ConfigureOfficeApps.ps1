@@ -1,9 +1,9 @@
 <#Author       : Akash Chawla
-# Usage        : RDP Shortpath
+# Usage        : Configure office applications for AVD
 #>
 
 #############################################
-#         Remove Office applications        #
+#         Configure Office applications     #
 #############################################
 
 
@@ -12,21 +12,49 @@
     [Parameter(
         Mandatory
     )]
-    [ValidateSet("Word","PowerPoint","Access","Excel","OneNote","Outlook","Publisher","Visio", "Publisher", "Skype")]
+    [ValidateSet("Word","PowerPoint","Access","Excel","OneNote","Outlook","Publisher","Visio", "Project")]
     [System.String[]]$Applications,
 
     [Parameter(
         Mandatory
     )]
+    [ValidateSet("32", "64")]
     [string]$Version,
 
     [Parameter(
         Mandatory
     )]
+    [ValidateSet("Add", "Remove")]
     [string]$Type
+    
 )
 
-function AddProductsToConfigurationXML($Applications, $xmlFile, $xmlFilePath, $Version) {
+function AddProductsToConfigurationXML {
+
+    [CmdletBinding()] Param (
+        [Parameter(
+            Mandatory
+        )]
+        [ValidateSet("Visio","Project")]
+        [System.String[]]$Applications,
+
+        [Parameter(
+            Mandatory
+        )]
+        [string]$xmlFile,
+
+        [Parameter(
+            Mandatory
+        )]
+        [string]$xmlFilePath,
+
+        [Parameter(
+            Mandatory
+        )]
+        [ValidateSet("32", "64")]
+        [string]$Version
+    )
+
     Begin {
 
         try {
@@ -81,7 +109,32 @@ function AddProductsToConfigurationXML($Applications, $xmlFile, $xmlFilePath, $V
     }
 }
 
-function RemoveProductsFromConfigurationXML($Applications, $xmlFile, $xmlFilePath, $Version) {
+function RemoveProductsFromConfigurationXML {
+
+   
+    [CmdletBinding()] Param (
+        [Parameter(
+            Mandatory
+        )]
+        [ValidateSet("Word","PowerPoint","Access","Excel","OneNote","Outlook","Publisher")]
+        [System.String[]]$Applications,
+
+        [Parameter(
+            Mandatory
+        )]
+        [string]$xmlFile,
+
+        [Parameter(
+            Mandatory
+        )]
+        [string]$xmlFilePath,
+
+        [Parameter(
+            Mandatory
+        )]
+        [ValidateSet("32", "64")]
+        [string]$Version
+    )
 
     Begin {
 

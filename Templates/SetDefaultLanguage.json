@@ -55,14 +55,14 @@
             },
             "customize": [
                     {
-                        "destination": "C:\\SetDefaultLanguage.ps1",
+                        "destination": "C:\\AVD\\SetDefaultLanguage.ps1",
                         "name": "setDefaultLanguage",
                         "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
                         "type": "File"
                     },
                     {
                         "inline": [
-                            "C:\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\""
+                            "C:\\AVD\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\""
                         ],
                         "name": "setDefaultLanguagePowershell",
                         "runAsSystem": true,
@@ -81,7 +81,7 @@
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.7",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.22",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd10",
