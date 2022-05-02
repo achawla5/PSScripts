@@ -22,26 +22,20 @@
         [string]$WindowsVersion
     )
 
-function Set-Assets($WindowsVersion, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppDrive, [ref] $LangPackPath) {
+function Set-Assets($WindowsVersion, [ref] $langDrive, [ref] $fodPath, [ref] $inboxAppDrive, [ref] $LangPackPath, $tempFolder) {
 
     Begin {
      
         # Set paths 
-
-        $appName = 'languagePacks'
-        $drive = 'C:\'
-        New-Item -Path $drive -Name $appName -ItemType Directory -ErrorAction SilentlyContinue
-        $LocalPath = $drive + $appName
-        Set-Location $LocalPath
 
         $langIsoUrlIso = 'LanguagePack.iso'
         $fodIsoUrlIso = 'FOD.iso'
         $inboxAppsIsoUrlIso = 'InboxApps.iso'
 
        
-        $langOutputPath = $LocalPath + '\' + $langIsoUrlIso
-        $fodOutputPath = $LocalPath + '\' + $fodIsoUrlIso
-        $inboxAppsOutputPath = $LocalPath + '\' + $inboxAppsIsoUrlIso
+        $langOutputPath = (Join-Path -Path $tempFolder -ChildPath $langIsoUrlIso)
+        $fodOutputPath = (Join-Path -Path $tempFolder -ChildPath $fodIsoUrlIso)
+        $inboxAppsOutputPath = (Join-Path -Path $tempFolder -ChildPath $inboxAppsIsoUrlIso)
     }
 
     Process {
@@ -104,7 +98,7 @@ function Set-Assets($WindowsVersion, [ref] $langDrive, [ref] $fodPath, [ref] $in
 
             $langDrive.Value = ($langMount | Get-Volume).DriveLetter+":"
             $fodPath.Value = ($fodMount | Get-Volume).DriveLetter+":"
-            $LangPackPath.Value = $langDrive.Value+"\x64\langpacks"
+            $LangPackPath.Value = Join-Path $langdrive.Value -ChildPath "\x64\langpacks"
 
         }
 
@@ -126,23 +120,15 @@ function Install-LanguagePack {
   
    
     <#
-    .SYNOPSIS
     Function to install language packs along with features on demand and inbox apps
 
-    .DESCRIPTION
     Based on the language parameter, this function installs language packs along with the necessary features on demand (FOD) and inbox apps. Not all FODs are available for each language - this function
-    will install the FODs based on the mapping here: https://raw.githubusercontent.com/achawla5/PSScripts/main/Windows-10-1809-FOD-to-LP-Mapping-Table.csv
-
-    // add supported languages
-
-    // add examples
-    .EXAMPLE
-    
-
+    will install the FODs based on the mapping here: https://download.microsoft.com/download/7/6/0/7600F9DC-C296-4CF8-B92A-2D85BAFBD5D2/Windows-10-1809-FOD-to-LP-Mapping-Table.xlsx
     #>
 
     BEGIN {
         
+        $templateFilePathFolder = "C:\AVDImage"
         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         Write-host "Starting AVD AIB Customization: Install Language packs: $((Get-Date).ToUniversalTime()) "
         
@@ -154,7 +140,16 @@ function Install-LanguagePack {
         $LangPackPath = ""
         $inboxAppDrive = ""
 
-        Set-Assets -WindowsVersion ($WindowsVersion) -langDrive ([ref] $langDrive) -fodPath ([ref] $fodPath) -langPackPath ([ref] $LangPackPath) -inboxAppDrive ([ref] $inboxAppDrive)
+        $guid = [guid]::NewGuid().Guid
+        $tempFolder = (Join-Path -Path "C:\temp\" -ChildPath $guid)
+       
+        if (!(Test-Path -Path $tempFolder)) {
+            New-Item -Path $tempFolder -ItemType Directory 
+        }
+
+        Set-Location $tempFolder
+
+        Set-Assets -WindowsVersion ($WindowsVersion) -langDrive ([ref] $langDrive) -fodPath ([ref] $fodPath) -langPackPath ([ref] $LangPackPath) -inboxAppDrive ([ref] $inboxAppDrive) -tempFolder $tempFolder
 
         #$langPackPath = "H:\x64\langpacks"
         #$fodPath = "F:"
@@ -231,21 +226,20 @@ function Install-LanguagePack {
                 continue
             }
             
-            $FeaturesList = $LPtoFODMapping | Where-Object { $_.'Target Lang' -eq $LanguageCode }
+            $FODList = $LPtoFODMapping | Where-Object { $_.'Target Lang' -eq $LanguageCode }
 
-            #From the Features On Demand iso
 
-            if (($FeaturesList | Measure-Object).Count -ne 0){
-                foreach ($file in $FeaturesList.'Cab Name') {
-                    $filePath = Get-ChildItem (Join-Path $fodPath $file.replace('.cab', '*.cab'))
+            if (($FODList | Measure-Object).Count -ne 0){
+                foreach ($file in $FODList.'Cab Name') {
+                    $FODFilePath = Get-ChildItem (Join-Path $fodPath $file.replace('.cab', '*.cab'))
     
-                    if ($null -eq $filePath) {
-                        Write-Host "AVD AIB Customization : Could not find $filePath"
+                    if ($null -eq $FODFilePath) {
+                        Write-Host "AVD AIB Customization : Could not find $FODFilePath"
                         break
                     }
     
                     try {
-                        $PackageName = $filePath.FullName
+                        $PackageName = $FODFilePath.FullName
                         Add-WindowsPackage -Online -PackagePath $PackageName -NoRestart -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
                     }
                     catch {
@@ -257,7 +251,7 @@ function Install-LanguagePack {
 
             # Update Inbox Apps
             # reference https://docs.microsoft.com/en-us/azure/virtual-desktop/language-packs
-            $inboxAppPath = $inboxAppDrive + "\amd64fre\"
+            $inboxAppPath = $inboxAppDrive + "\arm64fre\"
             foreach ($App in (Get-AppxProvisionedPackage -Online)) {
                 $AppPath = $inboxAppPath + $App.DisplayName + '_' + $App.PublisherId
                 $licFile = Get-Item $AppPath*.xml
@@ -284,9 +278,28 @@ function Install-LanguagePack {
                     continue;
                 }
             }
+
+            try {
+                Write-Host "AVD AIB CUSTOMIZER PHASE : Install language packs : Adding $LanguageCode to WinUserLanguageList"
+                $WinUserLanguageList = Get-WinUserLanguageList -ErrorAction Stop
+                $WinUserLanguageList.Add("$LanguageCode") 
+                Set-WinUserLanguageList $WinUserLanguageList -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Host "AVD AIB Customization : Failed to add $LanguageCode to WinUserLanguageList - [$($_.Exception.Message)]"
+            }
         }
     } #Process
     END {
+
+        #Cleanup
+        if ((Test-Path -Path $tempFolder -ErrorAction SilentlyContinue)) {
+            Remove-Item -Path $tempFolder -Force -Recurse -ErrorAction Continue
+        }
+
+        if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
+            Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
+        }
 
         $stopwatch.Stop()
         $elapsedTime = $stopwatch.Elapsed
