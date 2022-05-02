@@ -56,20 +56,24 @@
             "customize": [
 
                      {
-                        "destination": "C:\\ConfigureSessionTimeouts.ps1",
+                        "destination": "C:\\AVD\\ConfigureSessionTimeouts.ps1",
                         "name": "ConfigureSessionTimeouts",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/ConfigureSessionTimeouts.ps1",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/ConfigureSessionTimeoutsV2.ps1",
                         "type": "File"
                     },
                     {
                         "inline": [
-                             "C:\\ConfigureSessionTimeouts.ps1 -SessionTimeoutTypes \"EndSessionAtTimeLimit = 1 `n DisconnectedSessions = 5 `n ActiveSessions = 1 `n ActiveButIdleSessions = 10 `n LogOffSessions = 15\""
+                             "C:\\AVD\\ConfigureSessionTimeouts.ps1 -SessionTimeoutTypes \"Set time limit for disconnected sessions\", \"Set time limit for active but idle Remote Desktop Services sessions\", \"Set time limit for logoff of RemoteApp sessions\", \"Set time limit for active Remote Desktop Services sessions\", \"End session when time limits are reached\" -SessionTimeoutValues \"10\", \"20\", \"30\", \"40\", \"1\""
                         ],
                         "name": "ConfigureSessionTimeoutsPowershell",
                         "runAsSystem": true,
                         "runElevated": true,
                         "type": "PowerShell"
+                    },
+                    {
+                        "type": "WindowsUpdate"
                     }
+		
             ],
             "distribute": 
             [

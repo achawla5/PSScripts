@@ -38,13 +38,14 @@
     BEGIN {
           
           $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+          $templateFilePathFolder = "C:\AVDImage"
           $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
           Write-host "Starting AVD AIB Customization: Configure session timeouts"
 
           IF(!(Test-Path $registryPath)) {
             New-Item -Path $registryPath -Force | Out-Null
           }
-
     }
     PROCESS {
 
@@ -115,6 +116,11 @@
     }
 
     END {
+
+        
+        if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
+            Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
+        }
 
         $stopwatch.Stop()
         $elapsedTime = $stopwatch.Elapsed
