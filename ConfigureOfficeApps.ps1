@@ -41,7 +41,7 @@ function AddProductsToConfigurationXML {
         [Parameter(
             Mandatory
         )]
-        [string]$xmlFile,
+        $xmlFile,
 
         [Parameter(
             Mandatory
@@ -122,7 +122,7 @@ function RemoveProductsFromConfigurationXML {
         [Parameter(
             Mandatory
         )]
-        [string]$xmlFile,
+        $xmlFile,
 
         [Parameter(
             Mandatory
