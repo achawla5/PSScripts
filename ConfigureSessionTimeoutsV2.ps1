@@ -9,23 +9,30 @@
 
 [CmdletBinding()]
   Param (
-        [Parameter(
-            Mandatory
-        )]
-        [string[]] $SessionTimeoutTypes,
+        [Parameter(Mandatory=$false)]
+        [string] $MaxDisconnectionTime,
 
-        [Parameter(
-            Mandatory
-        )]
-        [string[]] $SessionTimeoutValues
+        [Parameter(Mandatory=$false)]
+        [string] $MaxIdleTime,
+
+        [Parameter(Mandatory=$false)]
+        [string] $MaxConnectionTime,
+
+        [Parameter(Mandatory=$false)]
+        [string] $RemoteAppLogoffTimeLimit,
+
+        [Parameter(Mandatory=$false)]
+        [string] $fResetBroken
  )
 
+ 
  function ConvertToMilliSecond($timeInMinutes) {
     return (60 * 1000 * $timeInMinutes)
  }
 
  function Set-RegKey($registryPath, $registryKey, $registryValue) {
     try {
+         Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Configure session timeouts - Setting  $registryKey with value $registryValue ***"
          New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
     }
     catch {
@@ -33,101 +40,37 @@
     }
  }
 
- function Set-SessionTimeout {
+ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
-    BEGIN {
-          
-          $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+ $templateFilePathFolder = "C:\AVDImage"
+ $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+ Write-host "Starting AVD AIB Customization: Configure session timeouts"
 
-          $templateFilePathFolder = "C:\AVDImage"
-          $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-          Write-host "Starting AVD AIB Customization: Configure session timeouts"
-
-          IF(!(Test-Path $registryPath)) {
-            New-Item -Path $registryPath -Force | Out-Null
-          }
-    }
-    PROCESS {
-
-        $SessionTimeoutsDictionary = @{}
-
-        for($i = 0; $i -lt $SessionTimeoutTypes.Count; $i++) {
-
-                $SessionTimeoutKey = $SessionTimeoutTypes[$i]
-                $SessionTimeoutValue = $SessionTimeoutValues[$i]
-
-                if(!($SessionTimeoutsDictionary.ContainsKey($SessionTimeoutKey))) {
-                    $SessionTimeoutsDictionary.Add( $SessionTimeoutKey,  $SessionTimeoutValue)
-                } 
-        }
-
-        try {
-            foreach($sessionTypes in $SessionTimeoutsDictionary.GetEnumerator()) {
-
-                $sessionTypeName = $($sessionTypes.Name);
-                $sessionTypeValue = $($sessionTypes.Value);
-
-                Write-Host "AVD AIB CUSTOMIZER PHASE - Configure session timeouts: Request to configure session type $sessionTypeName with value $sessionTypeValue"
-
-                if($sessionTypeName -eq "End session when time limits are reached") {
-                    $registryKey = "fResetBroken"
-                    $registryValue = "1"
-                    Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
-                } else {
-
-                    $registryValue = ConvertToMilliSecond -time $sessionTypeValue
-
-                    switch($sessionTypeName) {
-    
-                        "Set time limit for disconnected sessions" {
-                            $registryKey = "MaxDisconnectionTime"
-                        }
-    
-                        "Set time limit for active but idle Remote Desktop Services sessions" {
-                            $registryKey = "MaxIdleTime"
-                        }
-    
-                        "Set time limit for active Remote Desktop Services sessions" {
-                            $registryKey = "MaxConnectionTime"
-                        }
-    
-                        "Set time limit for logoff of RemoteApp sessions" {
-                            $registryKey = "RemoteAppLogoffTimeLimit"
-
-                        }
-                        default {
-                            Write-Host "AVD AIB CUSTOMIZER PHASE - Configure session timeouts: Invalid parameter for session type"
-                        }
-                    }
-
-                    if($null -ne $registryKey) {
-                        Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
-                    }
-
-                    # resetting the registry key and value for the next iteration
-                    $registryKey = $null
-                    $registryValue = $null
-                }
-            }
-        }
-        catch {
-             Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Configure session timeouts - Error occured : [$($_.Exception.Message)]"
-        } 
-    }
-
-    END {
-
-        
-        if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
-            Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
-        }
-
-        $stopwatch.Stop()
-        $elapsedTime = $stopwatch.Elapsed
-        Write-Host "*** AVD AIB CUSTOMIZER PHASE: Configure session timeouts - Exit Code: $LASTEXITCODE ***"
-        Write-host "Ending AVD AIB Customization: Configure session timeouts - Time taken: $elapsedTime "
-    }
+ IF(!(Test-Path $registryPath)) {
+   New-Item -Path $registryPath -Force | Out-Null
  }
 
- Set-SessionTimeout -SessionTimeoutTypes $SessionTimeoutTypes
+foreach($parameter in $PSBoundParameters.GetEnumerator()) {
+
+    $registryKey = $parameter.Key
+
+    if($registryKey.Equals("fResetBroken")) {
+        $registryValue = "1"
+        Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+        break
+    } 
+
+    $registryValue = ConvertToMilliSecond -time $parameter.Value
+    Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+}
+
+if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
+    Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
+}
+
+$stopwatch.Stop()
+$elapsedTime = $stopwatch.Elapsed
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Configure session timeouts - Exit Code: $LASTEXITCODE ***"
+Write-host "Ending AVD AIB Customization: Configure session timeouts - Time taken: $elapsedTime "
+
 

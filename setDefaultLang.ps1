@@ -14,6 +14,15 @@
         [string]$Language
 )
 
+function Set-RegKey($registryPath, $registryKey, $registryValue) {
+  try {
+       New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
+  }
+  catch {
+       Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
+  }
+}
+
 function Set-DefaultLanguage($Language) {
 
   BEGIN {
@@ -75,22 +84,15 @@ function Set-DefaultLanguage($Language) {
   }
 
   PROCESS {
-
-      try {
-        New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force | Out-Null  
-      }
-      catch {
-        Write-Host "*** AVD AIB CUSTOMIZER PHASE *** Set default Language - Cannot add the registry key *** : [$($_.Exception.Message)]"
-      }
+      Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
   }
 
   END {
 
-    
       if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
           Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
       }
-      
+
       $stopwatch.Stop()
       $elapsedTime = $stopwatch.Elapsed
       Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exit Code: $LASTEXITCODE ***"

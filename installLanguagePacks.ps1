@@ -283,7 +283,7 @@ function Install-LanguagePack {
                 Write-Host "AVD AIB CUSTOMIZER PHASE : Install language packs : Adding $LanguageCode to WinUserLanguageList"
                 $WinUserLanguageList = Get-WinUserLanguageList -ErrorAction Stop
                 $WinUserLanguageList.Add("$LanguageCode") 
-                Set-WinUserLanguageList $WinUserLanguageList -Force -ErrorAction Stop
+                Set-WinUserLanguageList -LanguageList $WinUserLanguageList -Force -ErrorAction Stop
             }
             catch {
                 Write-Host "AVD AIB Customization : Failed to add $LanguageCode to WinUserLanguageList - [$($_.Exception.Message)]"
