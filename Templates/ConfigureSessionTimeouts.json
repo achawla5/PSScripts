@@ -56,14 +56,14 @@
             "customize": [
 
                      {
-                        "destination": "C:\\AVD\\ConfigureSessionTimeouts.ps1",
+                        "destination": "C:\\AVDImage\\ConfigureSessionTimeouts.ps1",
                         "name": "ConfigureSessionTimeouts",
                         "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/ConfigureSessionTimeoutsV2.ps1",
                         "type": "File"
                     },
                     {
                         "inline": [
-                             "C:\\AVD\\ConfigureSessionTimeouts.ps1 -SessionTimeoutTypes \"Set time limit for disconnected sessions\", \"Set time limit for active but idle Remote Desktop Services sessions\", \"Set time limit for logoff of RemoteApp sessions\", \"Set time limit for active Remote Desktop Services sessions\", \"End session when time limits are reached\" -SessionTimeoutValues \"10\", \"20\", \"30\", \"40\", \"1\""
+                             "C:\\AVDImage\\ConfigureSessionTimeouts.ps1 -MaxDisconnectionTime \"60\" -MaxIdleTime \"60\" -MaxConnectionTime \"60\" -RemoteAppLogoffTimeLimit \"60\" -fResetBroken \"1\""
                         ],
                         "name": "ConfigureSessionTimeoutsPowershell",
                         "runAsSystem": true,

@@ -300,6 +300,10 @@ function installOfficeUsingODT($Applications, $Version, $Type) {
             Remove-Item -Path $tempFolder -Force -Recurse -ErrorAction Continue
         }
 
+        if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
+            Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
+        }
+
         $stopwatch.Stop()
         $elapsedTime = $stopwatch.Elapsed
         Write-Host "Ending AVD AIB Customization : Office Apps - Time taken: $elapsedTime"

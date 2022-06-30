@@ -26,76 +26,51 @@ Param (
 $LocalWVDpath            = "c:\temp\wvd\"
 $FSLogixURI              = 'https://aka.ms/fslogix_download'
 $FSInstaller             = 'FSLogixAppsSetup.zip'
-
+$templateFilePathFolder = "C:\AVDImage"
 
 ####################################
 #    Test/Create Temp Directory    #
 ####################################
 if((Test-Path c:\temp) -eq $false) {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "Create C:\temp Directory"
-    Write-Host `
-        -ForegroundColor Cyan `
-        -BackgroundColor Black `
-        "creating temp directory"
+    Write-Host "AVD AIB Customization - Install FSLogix : Creating temp directory"
     New-Item -Path c:\temp -ItemType Directory
 }
 else {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "C:\temp Already Exists"
-    Write-Host `
-        -ForegroundColor Yellow `
-        -BackgroundColor Black `
-        "temp directory already exists"
+    Write-Host "AVD AIB Customization - Install FSLogix : C:\temp already exists"
 }
 if((Test-Path $LocalWVDpath) -eq $false) {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "Create C:\temp\WVD Directory"
-    Write-Host `
-        -ForegroundColor Cyan `
-        -BackgroundColor Black `
-        "creating c:\temp\wvd directory"
+    Write-Host "AVD AIB Customization - Install FSLogix : Creating directory: $LocalWVDpath"
     New-Item -Path $LocalWVDpath -ItemType Directory
 }
 else {
-    Add-Content -LiteralPath C:\New-WVDSessionHost.log "C:\temp\WVD Already Exists"
-    Write-Host `
-        -ForegroundColor Yellow `
-        -BackgroundColor Black `
-        "c:\temp\wvd directory already exists"
+    Write-Host "AVD AIB Customization - Install FSLogix : $LocalWVDpath already exists"
 }
-New-Item -Path c:\ -Name New-WVDSessionHost.log -ItemType File
-Add-Content `
--LiteralPath C:\New-WVDSessionHost.log `
-"
-ProfilePath       = $ProfilePath
-RegistrationToken = $RegistrationToken
-Optimize          = $Optimize
-"
-
 
 #################################
 #    Download WVD Componants    #
 #################################
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "Downloading FSLogix"
-    Invoke-WebRequest -Uri $FSLogixURI -OutFile "$LocalWVDpath$FSInstaller"
+Write-Host "AVD AIB Customization - Install FSLogix : Downloading FSLogix from URI: $FSLogixURI"
+Invoke-WebRequest -Uri $FSLogixURI -OutFile "$LocalWVDpath$FSInstaller"
 
 
 ##############################
 #    Prep for WVD Install    #
 ##############################
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "Unzip FSLogix"
+Write-Host "AVD AIB Customization - Install FSLogix : Unzipping FSLogix installer"
 Expand-Archive `
     -LiteralPath "C:\temp\wvd\$FSInstaller" `
     -DestinationPath "$LocalWVDpath\FSLogix" `
     -Force `
     -Verbose
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-cd $LocalWVDpath 
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "UnZip FXLogix Complete"
+Set-Location $LocalWVDpath 
+Write-Host "AVD AIB Customization - Install FSLogix : UnZip of FSLogix complete"
 
 
 #########################
 #    FSLogix Install    #
 #########################
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "Installing FSLogix"
+Write-Host "AVD AIB Customization - Install FSLogix : Starting to install FSLogix"
 $fslogix_deploy_status = Start-Process `
     -FilePath "$LocalWVDpath\FSLogix\x64\Release\FSLogixAppsSetup.exe" `
     -ArgumentList "/install /quiet" `
@@ -108,7 +83,7 @@ if(!($PSBoundParameters.ContainsKey('VHDSize'))) {
 #######################################
 #    FSLogix User Profile Settings    #
 #######################################
-Add-Content -LiteralPath C:\New-WVDSessionHost.log "Configure FSLogix Profile Settings"
+Write-Host "AVD AIB Customization - Install FSLogix : Configure FSLogix Profile Settings"
 Push-Location 
 Set-Location HKLM:\SOFTWARE\
 New-Item `
@@ -166,8 +141,15 @@ Set-ItemProperty `
     -Name DeleteLocalProfileWhenVHDShouldApply `
     -Type DWord `
     -Value 1
-Pop-Location
 
+#Cleanup
+if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
+    Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
+}
+
+if ((Test-Path -Path $LocalWVDpath -ErrorAction SilentlyContinue)) {
+    Remove-Item -Path $LocalWVDpath -Force -Recurse -ErrorAction Continue
+}
 
 #############
 #    END    #

@@ -19,6 +19,7 @@
    
         Begin {
             $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+            $templateFilePathFolder = "C:\AVDImage"
             Write-host "Starting AVD AIB Customization: Remove Appx Packages : $((Get-Date).ToUniversalTime()) "
         }
 
@@ -47,6 +48,11 @@
         
         End {
 
+            #Cleanup
+            if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
+                Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
+            }
+    
             $stopwatch.Stop()
             $elapsedTime = $stopwatch.Elapsed
             Write-Host "*** AVD AIB CUSTOMIZER PHASE : Remove Appx Packages -  Exit Code: $LASTEXITCODE ***"    
