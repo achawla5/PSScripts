@@ -50,61 +50,31 @@
                 "type": "PlatformImage",
                     "publisher": "MicrosoftWindowsDesktop",
                     "offer": "windows-10",
-                    "sku": "19h2-ent",
+                    "sku": "20h1-ent",
                     "version": "latest"
             },
             "customize": [
-                   {
-                        "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
-                        "name": "installLanguagePacks",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/languagePacks.ps1",
+                    {
+                        "destination": "C:\\AVD\\InstallFSLogix.ps1",
+                        "name": "InstallFSLogix",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/FSLogix.ps1",
                         "type": "File"
                     },
                     {
                         "inline": [
-                            "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\" -WindowsVersion \"Windows 10 - 1909\""
-                            
+                            "C:\\AVD\\InstallFSLogix.ps1 -ProfilePath \"//akashaibcustomizations.file.core.windows.net/avdaibcustomizationscripts\" -VHDSize \"50000\" "
                         ],
-                        "name": "LanguagePacksPowershell",
+                        "name": "InstallFSLogixPowershell",
                         "runAsSystem": true,
                         "runElevated": true,
                         "type": "PowerShell"
-                    },
-                    {
-                        "name": "",
-                        "restartCheckCommand": "",
-                        "restartCommand": "",
-                        "restartTimeout": "5m",
-                        "type": "WindowsRestart"
-                    },
-                    {
-                        "destination": "C:\\AVDImage\\SetDefaultLanguage.ps1",
-                        "name": "setDefaultLanguage",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
-                        "type": "File"
-                    },
-                    {
-                        "inline": [
-                            "C:\\AVDImage\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\""
-                        ],
-                        "name": "setDefaultLanguagePowershell",
-                        "runAsSystem": true,
-                        "runElevated": true,
-                        "type": "PowerShell"
-                    },
-                    {
-                        "name": "",
-                        "restartCheckCommand": "",
-                        "restartCommand": "",
-                        "restartTimeout": "5m",
-                        "type": "WindowsRestart"
                     }
             ],
             "distribute": 
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.13",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.8",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd10",
