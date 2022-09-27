@@ -73,7 +73,7 @@ Write-Host "AVD AIB Customization - Install FSLogix : UnZip of FSLogix complete"
 Write-Host "AVD AIB Customization - Install FSLogix : Starting to install FSLogix"
 $fslogix_deploy_status = Start-Process `
     -FilePath "$LocalWVDpath\FSLogix\x64\Release\FSLogixAppsSetup.exe" `
-    -ArgumentList "/install /quiet" `
+    -ArgumentList "/install /quiet /norestart" `
     -Wait `
     -Passthru
 
