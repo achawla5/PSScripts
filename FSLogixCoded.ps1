@@ -12,14 +12,6 @@
 #
 #>
 
-Param (        
-    [Parameter(Mandatory=$true)]
-        [string]$ProfilePath,
-
-    [Parameter(Mandatory=$false)]
-        [string]$VHDSize
-)
-
 ######################
 #    WVD Variables   #
 ######################
