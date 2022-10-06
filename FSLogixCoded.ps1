@@ -12,21 +12,15 @@
 #
 #>
 
-Param (        
-    [Parameter(Mandatory=$true)]
-        [string]$ProfilePath,
-
-    [Parameter(Mandatory=$false)]
-        [string]$VHDSize
-)
-
 ######################
 #    WVD Variables   #
 ######################
 $LocalWVDpath            = "c:\temp\wvd\"
 $FSLogixURI              = 'https://aka.ms/fslogix_download'
 $FSInstaller             = 'FSLogixAppsSetup.zip'
-$templateFilePathFolder = "C:\AVDImage"
+$templateFilePathFolder = "C:\AVDImage" 
+$ProfilePath = "C:\temoProfilePath"
+$VHDSize = "50000"
 
 ####################################
 #    Test/Create Temp Directory    #
@@ -77,9 +71,9 @@ $fslogix_deploy_status = Start-Process `
     -Wait `
     -Passthru
 
-if(!($PSBoundParameters.ContainsKey('VHDSize'))) {
-    $VHDSize = "30000"
-}
+# if(!($PSBoundParameters.ContainsKey('VHDSize'))) {
+#     $VHDSize = "30000"
+# }
 #######################################
 #    FSLogix User Profile Settings    #
 #######################################
