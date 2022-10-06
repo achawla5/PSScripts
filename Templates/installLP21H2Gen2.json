@@ -50,20 +50,19 @@
                 "type": "PlatformImage",
                     "publisher": "MicrosoftWindowsDesktop",
                     "offer": "windows-10",
-                    "sku": "19h2-ent",
+                    "sku": "win10-21h2-ent-g2",
                     "version": "latest"
             },
             "customize": [
                    {
                         "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
                         "name": "installLanguagePacks",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/languagePacks.ps1",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/installLanguagePacks.ps1",
                         "type": "File"
                     },
                     {
                         "inline": [
-                            "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\" -WindowsVersion \"Windows 10 - 1909\""
-                            
+                            "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\", \"French (France)\" -WindowsVersion \"Windows 10 - 21H2\""
                         ],
                         "name": "LanguagePacksPowershell",
                         "runAsSystem": true,
@@ -104,7 +103,7 @@
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.13",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.2",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd10",

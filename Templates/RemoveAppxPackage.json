@@ -57,7 +57,7 @@
                    {
                         "destination": "C:\\RemoveAppxPackage.ps1",
                         "name": "RemoveAppxPackage",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/RemoveAppxPackagesV2.ps1",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/RemoveAppxPackages.ps1",
                         "type": "File"
                     },
                     {
@@ -68,13 +68,6 @@
                         "runAsSystem": true,
                         "runElevated": true,
                         "type": "PowerShell"
-                    },
-                    {
-                        "name": "",
-                        "restartCheckCommand": "",
-                        "restartCommand": "",
-                        "restartTimeout": "5m",
-                        "type": "WindowsRestart"
                     }
             ],
             "distribute": 
