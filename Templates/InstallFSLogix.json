@@ -55,6 +55,45 @@
             },
             "customize": [
                     {
+                        "name": "disableStorageSense",
+                        "type": "PowerShell",
+                        "sha256Checksum": "cb0c3d9619ad816df84864a607815ca5e7921485dcf74ec06c7b0ac4a6f396eb",
+                        "runElevated": true,
+                        "runAsSystem": true,
+                        "scriptUri": "https://raw.githubusercontent.com/murajput/PSScripts/master/main/DisableStorageSense.ps1"
+                    },
+                    {
+                        "name": "fsLogixKerberos",
+                        "type": "PowerShell",
+                        "sha256Checksum": "d5ee4349b6f21986f40403bceb7a436fed8a5f05679f3ba325a4f4e2ab7b65d6",
+                        "runElevated": true,
+                        "runAsSystem": true,
+                        "scriptUri": "https://raw.githubusercontent.com/murajput/PSScripts/master/main/FSLogixKerberos.ps1"
+                    },
+                    {
+                        "name": "configureRdpShortpath",
+                        "type": "PowerShell",
+                        "sha256Checksum": "63a91302c7bc51bbe670e08ca40a66a52c4f4a27dd61b9ef4c2c63a9a419ea87",
+                        "runElevated": true,
+                        "runAsSystem": true,
+                        "scriptUri": "https://raw.githubusercontent.com/murajput/PSScripts/master/main/RDPShortpath.ps1"
+                    },
+                    {
+                        "name": "removeAppxPackages",
+                        "type": "File",
+                        "sourceUri": "https://raw.githubusercontent.com/murajput/PSScripts/master/main/RemoveAppxPackages.ps1",
+                        "destination": "C:\\AVDImage\\removeAppxPackages.ps1",
+                    },
+                    {
+                        "name": "removeAppxPackages-parameter",
+                        "type": "PowerShell",
+                        "runElevated": true,
+                        "runAsSystem": true,
+                        "inline": [
+                        "C:\\AVDImage\\removeAppxPackages.ps1 -AppxPackages \"Microsoft.BingNews\",\"Microsoft.BingWeather\",\"Microsoft.GamingApp\",\"Microsoft.Getstarted\",\"Microsoft.GetHelp\",\"Microsoft.MicrosoftOfficeHub\",\"Microsoft.Office.OneNote\",\"Microsoft.MicrosoftSolitaireCollection\",\"Microsoft.MicrosoftStickyNotes\",\"Microsoft.People\",\"Microsoft.MSPaint\",\"Microsoft.PowerAutomateDesktop\",\"Microsoft.ScreenSketch\",\"Microsoft.SkypeApp\",\"Microsoft.Todos\",\"Microsoft.Windows.Photos\",\"Microsoft.WindowsAlarms\",\"Microsoft.WindowsCalculator\",\"Microsoft.WindowsCamera\",\"Microsoft.windowscommunicationsapps\",\"Microsoft.WindowsFeedbackHub\",\"Microsoft.WindowsMaps\",\"Microsoft.WindowsNotepad\",\"Microsoft.WindowsSoundRecorder\",\"Microsoft.WindowsTerminal\",\"Microsoft.Xbox.TCUI\",\"Microsoft.XboxGameOverlay\",\"Microsoft.XboxGamingOverlay\",\"Microsoft.XboxSpeechToTextOverlay\",\"Microsoft.XboxIdentityProvider\",\"Microsoft.YourPhone\",\"Microsoft.ZuneMusic\",\"Microsoft.ZuneVideo\",\"Microsoft.XboxApp\""
+                        ]
+                    },
+                    {
                         "destination": "C:\\AVD\\InstallFSLogix.ps1",
                         "name": "InstallFSLogix",
                         "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/FSLogix.ps1",
@@ -68,13 +107,21 @@
                         "runAsSystem": true,
                         "runElevated": true,
                         "type": "PowerShell"
+                    },
+                    {
+                        "type": "PowerShell",
+                        "runElevated": true,
+                        "name": "DeprovisioningScriptTest",
+                        "inline": [
+                          "((Get-Content -path C:\\DeprovisioningScript.ps1 -Raw) -replace 'Sysprep.exe /oobe /generalize /quiet /quit','Sysprep.exe /oobe /generalize /quit /mode:vm' ) | Set-Content -Path C:\\DeprovisioningScript.ps1"
+                         ]
                     }
             ],
             "distribute": 
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.8",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.9",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd10",
