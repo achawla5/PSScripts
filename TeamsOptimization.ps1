@@ -11,7 +11,7 @@
 [CmdletBinding()]
   Param (
         [Parameter(Mandatory)]
-        [string]$TeamsDownloadLink
+        [string]$TeamsDownloadLink,
 
         [Parameter(
             Mandatory

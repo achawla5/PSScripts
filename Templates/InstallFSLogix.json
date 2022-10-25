@@ -82,7 +82,7 @@
                         "name": "removeAppxPackages",
                         "type": "File",
                         "sourceUri": "https://raw.githubusercontent.com/murajput/PSScripts/master/main/RemoveAppxPackages.ps1",
-                        "destination": "C:\\AVDImage\\removeAppxPackages.ps1",
+                        "destination": "C:\\AVDImage\\removeAppxPackages.ps1"
                     },
                     {
                         "name": "removeAppxPackages-parameter",
@@ -112,10 +112,8 @@
                         "type": "PowerShell",
                         "runElevated": true,
                         "runAsSystem": true,
-                        "name": "DeprovisioningScriptTest",
-                        "inline": [
-                          "((Get-Content -path C:\\DeprovisioningScript.ps1 -Raw) -replace 'Sysprep.exe /oobe /generalize /quiet /quit','Sysprep.exe /oobe /generalize /quit /mode:vm' ) | Set-Content -Path C:\\DeprovisioningScript.ps1"
-                         ]
+                        "name": "DeprovisioningScript",
+                        "scriptUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/DisableWindowsModuleInstaller.ps1"
                     },
                     {
                         "name": "",
@@ -129,7 +127,7 @@
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.10",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.32",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd10",
