@@ -21,7 +21,7 @@
         [Parameter(
             Mandatory
         )]
-        [string]$WebRTCInstaller = "https://aka.ms/msrdcwebrtcsvc/msi"
+        [string]$WebRTCInstaller
 )
  
  function InstallTeamsOptimizationforAVD($TeamsDownloadLink, $VCRedistributableLink, $WebRTCInstaller) {
