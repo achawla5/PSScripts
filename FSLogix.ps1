@@ -146,14 +146,14 @@ Set-ItemProperty `
 Write-Host "AVD AIB Customization - Install FSLogix : Adding exclusions for Microsoft Defender"
 
 try {
-    $filelist = `
-    "%ProgramFiles%\FSLogix\Apps\frxdrv.sys", `
-    "%ProgramFiles%\FSLogix\Apps\frxdrvvt.sys", `
-    "%ProgramFiles%\FSLogix\Apps\frxccd.sys", `
-    "%TEMP%\*.VHD", `
-    "%TEMP%\*.VHDX", `
-    "%Windir%\TEMP\*.VHD", `
-    "%Windir%\TEMP\*.VHDX", `
+     $filelist = `
+  "%ProgramFiles%\FSLogix\Apps\frxdrv.sys", `
+  "%ProgramFiles%\FSLogix\Apps\frxdrvvt.sys", `
+  "%ProgramFiles%\FSLogix\Apps\frxccd.sys", `
+  "%TEMP%\*.VHD", `
+  "%TEMP%\*.VHDX", `
+  "%Windir%\TEMP\*.VHD", `
+  "%Windir%\TEMP\*.VHDX" `
 
     $processlist = `
     "%ProgramFiles%\FSLogix\Apps\frxccd.exe", `

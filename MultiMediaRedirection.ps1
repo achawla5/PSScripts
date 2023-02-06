@@ -21,12 +21,12 @@
     [Parameter(
         Mandatory
     )]
-    [bool]$EnableEdge,
+    [string]$EnableEdge,
 
     [Parameter(
         Mandatory
     )]
-    [bool]$EnableChrome
+    [string]$EnableChrome
 )
 
 function InstallAndEnableMMR($VCRedistributableLink, $EnableChrome, $EnableEdge) {
@@ -89,14 +89,14 @@ function InstallAndEnableMMR($VCRedistributableLink, $EnableChrome, $EnableEdge)
                 #      Write-host "AVD AIB Customization:  MultiMedia Redirection - Microsoft Edge is not installed - Installing latest version of Microsoft Edge"
 
                 # }
-                if($EnableEdge) {
+                if([System.Convert]::ToBoolean($EnableEdge)) {
                     $registryValue = '{ "joeclbldhdmoijbaagobkhlpfjglcihd": { "installation_mode": "force_installed", "update_url": "https://edge.microsoft.com/extensionwebstorebase/v1/crx" } }';
                     New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force
                     New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name ExtensionSettings -PropertyType String -Value $registryValue -Force  
                     Write-host "AVD AIB Customization:  MultiMedia Redirection - Finished enabling extension for Microsoft Edge" 
                 }
 
-                if($EnableChrome) {
+                if([System.Convert]::ToBoolean($EnableChrome) {
                      #Install Chrome and enable extension
                     Write-host "AVD AIB Customization:  MultiMedia Redirection - Checking if Google Chrome is installed"
 
