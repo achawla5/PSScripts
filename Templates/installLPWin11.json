@@ -1,140 +1,140 @@
 {
-        "type": "Microsoft.VirtualMachineImages/imageTemplates",
-        "apiVersion": "[parameters('api-version')]",
-        "location": "westus2",
-        "dependsOn": [],
-        "tags": {
-            "forAvd2": "true",
-            "imagebuilderTemplate": "AzureImageBuilderSIG",
-            "userIdentity": "enabled"
-                },
-            "identity": {
-                "type": "UserAssigned",
-                        "userAssignedIdentities": {
-                        "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourcegroups/akas-aib/providers/Microsoft.ManagedIdentity/userAssignedIdentities/akas-aibIdentity01": {}
-                            
-                    }
-                    },
-        
-        "properties": {
-            "buildTimeoutInMinutes" : 800,
-
-            "vmProfile": 
-                    {
-                    "vmSize": "Standard_D2s_v3",
-                    "osDiskSizeGB": 127
-                    },
-        
-            "source": {
-                "type": "PlatformImage",
-                    "publisher": "MicrosoftWindowsDesktop",
-                    "offer": "windows-11",
-                    "sku": "win11-21h2-ent",
-                    "version": "latest"
+    "type": "Microsoft.VirtualMachineImages/imageTemplates",
+    "apiVersion": "[parameters('api-version')]",
+    "location": "westus2",
+    "dependsOn": [],
+    "tags": {
+        "forAvd2": "true",
+        "imagebuilderTemplate": "AzureImageBuilderSIG",
+        "userIdentity": "enabled"
             },
-            "customize": [
-                   {
-                        "destination": "C:\\installLanguagePacks.ps1",
-                        "name": "installLanguagePacks",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/installLanguagePacksV2.ps1",
-                        "type": "File"
-                    },
-                    {
-                        "inline": [
-                            "C:\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\""
-                        ],
-                        "name": "LanguagePacksPowershell",
-                        "runAsSystem": true,
-                        "runElevated": true,
-                        "type": "PowerShell"
-                    },
-                    {
-                        "name": "",
-                        "restartCheckCommand": "",
-                        "restartCommand": "",
-                        "restartTimeout": "10m",
-                        "type": "WindowsRestart"
-                    },
-                    {
-                        "destination": "C:\\SetDefaultLanguage.ps1",
-                        "name": "setDefaultLanguage",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
-                        "type": "File"
-                    },
-                    {
-                        "inline": [
-                            "C:\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\""
-                        ],
-                        "name": "setDefaultLanguagePowershell",
-                        "runAsSystem": true,
-                        "runElevated": true,
-                        "type": "PowerShell"
-                    },
-                    {
-                        "name": "",
-                        "restartCheckCommand": "",
-                        "restartCommand": "",
-                        "restartTimeout": "5m",
-                        "type": "WindowsRestart"
-                    },
-                    {
-                        "destination": "C:\\AVD\\InstallFSLogix.ps1",
-                        "name": "InstallFSLogix",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/FSLogix.ps1",
-                        "type": "File"
-                    },
-                    {
-                        "inline": [
-                            "C:\\AVD\\InstallFSLogix.ps1 -FSLogixInstaller \"https://download.microsoft.com/download/0/a/4/0a4c3a18-f6c8-4bcd-91fc-97ce845e2d3e/FSLogix_Apps_2.9.8361.52326.zip\" -VHDSize \"50000\" "
-                        ],
-                        "name": "InstallFSLogixPowershell",
-                        "runAsSystem": true,
-                        "runElevated": true,
-                        "type": "PowerShell"
-                    },
-                    {
-                        "destination": "C:\\AVD\\MMR.ps1",
-                        "name": "MMR",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/MultiMediaRedirection.ps1",
-                        "type": "File"
-                    },
-                    {
-                        "inline": [
-                            "C:\\AVD\\MMR.ps1 -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\" -EnableEdge \"true\" -EnableChrome \"true\""
-                        ],
-                        "name": "MMRPowershell",
-                        "runAsSystem": true,
-                        "runElevated": true,
-                        "type": "PowerShell"
-                    },
-                    {
-                        "name": "",
-                        "restartCheckCommand": "",
-                        "restartCommand": "",
-                        "restartTimeout": "5m",
-                        "type": "WindowsRestart"
-                    }
-            ],
-            "distribute": 
-            [
-                {   
-                    "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.5",
-                    "runOutputName": "aibimg04",
-                    "artifactTags": {
-                        "source": "wvd11",
-                        "baseosimg": "windows11"
-                    },
-                    "replicationRegions": [
-                      "westus2"
-
-                    ]
+        "identity": {
+            "type": "UserAssigned",
+                    "userAssignedIdentities": {
+                    "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourcegroups/akas-aib/providers/Microsoft.ManagedIdentity/userAssignedIdentities/akas-aibIdentity01": {}
+                        
                 }
-            ]
+                },
+    
+    "properties": {
+        "buildTimeoutInMinutes" : 800,
+
+        "vmProfile": 
+                {
+                "vmSize": "Standard_D2s_v3",
+                "osDiskSizeGB": 127
+                },
+    
+        "source": {
+            "type": "PlatformImage",
+                "publisher": "MicrosoftWindowsDesktop",
+                "offer": "windows-11",
+                "sku": "win11-21h2-ent",
+                "version": "latest"
+        },
+        "customize": [
+                {
+                    "destination": "C:\\installLanguagePacks.ps1",
+                    "name": "installLanguagePacks",
+                    "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/installLanguagePacksV2.ps1",
+                    "type": "File"
+                },
+                {
+                    "inline": [
+                        "C:\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\""
+                    ],
+                    "name": "LanguagePacksPowershell",
+                    "runAsSystem": true,
+                    "runElevated": true,
+                    "type": "PowerShell"
+                },
+                {
+                    "name": "",
+                    "restartCheckCommand": "",
+                    "restartCommand": "",
+                    "restartTimeout": "10m",
+                    "type": "WindowsRestart"
+                },
+                {
+                    "destination": "C:\\SetDefaultLanguage.ps1",
+                    "name": "setDefaultLanguage",
+                    "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
+                    "type": "File"
+                },
+                {
+                    "inline": [
+                        "C:\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\""
+                    ],
+                    "name": "setDefaultLanguagePowershell",
+                    "runAsSystem": true,
+                    "runElevated": true,
+                    "type": "PowerShell"
+                },
+                {
+                    "name": "",
+                    "restartCheckCommand": "",
+                    "restartCommand": "",
+                    "restartTimeout": "5m",
+                    "type": "WindowsRestart"
+                },
+                {
+                    "destination": "C:\\AVD\\InstallFSLogix.ps1",
+                    "name": "InstallFSLogix",
+                    "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/FSLogix.ps1",
+                    "type": "File"
+                },
+                {
+                    "inline": [
+                        "C:\\AVD\\InstallFSLogix.ps1 -FSLogixInstaller \"https://download.microsoft.com/download/0/a/4/0a4c3a18-f6c8-4bcd-91fc-97ce845e2d3e/FSLogix_Apps_2.9.8361.52326.zip\" -VHDSize \"50000\" "
+                    ],
+                    "name": "InstallFSLogixPowershell",
+                    "runAsSystem": true,
+                    "runElevated": true,
+                    "type": "PowerShell"
+                },
+                {
+                    "destination": "C:\\AVD\\MMR.ps1",
+                    "name": "MMR",
+                    "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/MultiMediaRedirection.ps1",
+                    "type": "File"
+                },
+                {
+                    "inline": [
+                        "C:\\AVD\\MMR.ps1 -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\" -EnableEdge \"true\" -EnableChrome \"true\""
+                    ],
+                    "name": "MMRPowershell",
+                    "runAsSystem": true,
+                    "runElevated": true,
+                    "type": "PowerShell"
+                },
+                {
+                    "name": "",
+                    "restartCheckCommand": "",
+                    "restartCommand": "",
+                    "restartTimeout": "5m",
+                    "type": "WindowsRestart"
+                }
+        ],
+        "distribute": 
+        [
+            {   
+                "type": "SharedImage",
+                "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.5",
+                "runOutputName": "aibimg04",
+                "artifactTags": {
+                    "source": "wvd11",
+                    "baseosimg": "windows11"
+                },
+                "replicationRegions": [
+                    "westus2"
+
+                ]
             }
+        ]
+        }
 }
 
-  
+
 
 
 
