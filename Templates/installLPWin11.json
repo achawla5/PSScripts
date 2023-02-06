@@ -63,7 +63,7 @@
                 },
                 {
                     "inline": [
-                        "C:\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\""
+                        "C:\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\" -TimeZone \"New Zealand Standard Time\""
                     ],
                     "name": "setDefaultLanguagePowershell",
                     "runAsSystem": true,
@@ -119,7 +119,7 @@
         [
             {   
                 "type": "SharedImage",
-                "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.5",
+                "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.6",
                 "runOutputName": "aibimg04",
                 "artifactTags": {
                     "source": "wvd11",

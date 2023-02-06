@@ -11,10 +11,13 @@
   Param (
         [Parameter(Mandatory)]
         [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)")]
-        [string]$Language
+        [string]$Language,
+
+        [Parameter(Mandatory=$false)]
+        [string]$TimeZone,
 )
 
-function Set-DefaultLanguage($Language) {
+function Set-DefaultLanguage($Language, $TimeZone) {
 
   BEGIN {
 
@@ -69,11 +72,23 @@ function Set-DefaultLanguage($Language) {
   }
 
   PROCESS {
-      Set-systempreferreduilanguage -Language $LanguageTag
-      Set-WinSystemLocale -SystemLocale $LanguageTag
-      Set-Culture -CultureInfo $LanguageTag
-      Set-WinUILanguageOverride -Language $LanguageTag
-      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
+
+    try {
+        Set-systempreferreduilanguage -Language $LanguageTag
+        Set-WinSystemLocale -SystemLocale $LanguageTag
+        Set-Culture -CultureInfo $LanguageTag
+        Set-WinUILanguageOverride -Language $LanguageTag
+        Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
+
+        if(!($PSBoundParameters.ContainsKey('TimeZone'))) {
+            Set-TimeZone -Name $TimeZone -PassThru
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Timezone set to $TimeZone***"
+        }
+    } 
+    catch {
+         Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
+         Write-Host $PSItem.Exception
+    }
   }
 
   END {
@@ -89,7 +104,7 @@ function Set-DefaultLanguage($Language) {
   }
 }
 
-Set-DefaultLanguage -Language $Language
+Set-DefaultLanguage -Language $Language -TimeZone $TimeZone
 
 #############
 #    END    #
