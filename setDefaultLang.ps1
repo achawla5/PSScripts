@@ -69,8 +69,11 @@ function Set-DefaultLanguage($Language) {
   }
 
   PROCESS {
-      Set-SystemPreferredUILanguage -Language $LanguageTag
-      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language has been set as the default System Preferred UI Language***"
+      Set-systempreferreduilanguage -Language $LanguageTag
+      Set-WinSystemLocale -SystemLocale $LanguageTag
+      Set-Culture -CultureInfo $LanguageTag
+      Set-WinUILanguageOverride -Language $LanguageTag
+      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
   }
 
   END {

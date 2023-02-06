@@ -7,7 +7,7 @@
 #######################################
 
 Param (        
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
         [string]$ProfilePath,
 
     [Parameter(Mandatory=$true)]
@@ -96,12 +96,16 @@ Set-ItemProperty `
     -Name "Enabled" `
     -Type "Dword" `
     -Value "1"
-New-ItemProperty `
+
+if(($PSBoundParameters.ContainsKey('ProfilePath'))) {
+    New-ItemProperty `
     -Path HKLM:\Software\FSLogix\Profiles `
     -Name "CCDLocations" `
     -Value "type=smb,connectionString=$ProfilePath" `
     -PropertyType MultiString `
     -Force
+}
+
 Set-ItemProperty `
     -Path HKLM:\Software\FSLogix\Profiles `
     -Name "SizeInMBs" `
@@ -137,6 +141,42 @@ Set-ItemProperty `
     -Name DeleteLocalProfileWhenVHDShouldApply `
     -Type DWord `
     -Value 1
+
+#Reference: https://learn.microsoft.com/en-us/azure/architecture/example-scenario/wvd/windows-virtual-desktop-fslogix#add-exclusions-for-microsoft-defender-for-cloud-by-using-powershell
+Write-Host "AVD AIB Customization - Install FSLogix : Adding exclusions for Microsoft Defender"
+
+try {
+    $filelist = `
+    "%ProgramFiles%\FSLogix\Apps\frxdrv.sys", `
+    "%ProgramFiles%\FSLogix\Apps\frxdrvvt.sys", `
+    "%ProgramFiles%\FSLogix\Apps\frxccd.sys", `
+    "%TEMP%\*.VHD", `
+    "%TEMP%\*.VHDX", `
+    "%Windir%\TEMP\*.VHD", `
+    "%Windir%\TEMP\*.VHDX", `
+
+    $processlist = `
+    "%ProgramFiles%\FSLogix\Apps\frxccd.exe", `
+    "%ProgramFiles%\FSLogix\Apps\frxccds.exe", `
+    "%ProgramFiles%\FSLogix\Apps\frxsvc.exe"
+
+    Foreach($item in $filelist){
+        Add-MpPreference -ExclusionPath $item}
+    Foreach($item in $processlist){
+        Add-MpPreference -ExclusionProcess $item}
+
+
+    Add-MpPreference -ExclusionPath "%ProgramData%\FSLogix\Cache\*.VHD"
+    Add-MpPreference -ExclusionPath "%ProgramData%\FSLogix\Cache\*.VHDX"
+    Add-MpPreference -ExclusionPath "%ProgramData%\FSLogix\Proxy\*.VHD"
+    Add-MpPreference -ExclusionPath "%ProgramData%\FSLogix\Proxy\*.VHDX"
+}
+catch {
+     Write-Host "AVD AIB Customization - Install FSLogix : Exception occurred while adding exclusions for Microsoft Defender"
+     Write-Host $PSItem.Exception
+}
+
+Write-Host "AVD AIB Customization - Install FSLogix : Finished adding exclusions for Microsoft Defender"
 
 #Cleanup
 if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
