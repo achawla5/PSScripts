@@ -7,9 +7,6 @@
         },
         "api-version": {
           "type": "string"
-        },
-        "svclocation": {
-            "type": "string"
         }
     },
     
