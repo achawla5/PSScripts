@@ -57,12 +57,12 @@
                    {
                         "destination": "C:\\installLanguagePacks.ps1",
                         "name": "installLanguagePacks",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/languagePacks.ps1",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/installLanguagePacksV2.ps1",
                         "type": "File"
                     },
                     {
                         "inline": [
-                            "C:\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\" -WindowsVersion \"Windows 11\""
+                            "C:\\installLanguagePacks.ps1 -LanguageList \"Spanish (Spain)\""
                         ],
                         "name": "LanguagePacksPowershell",
                         "runAsSystem": true,
@@ -97,13 +97,50 @@
                         "restartCommand": "",
                         "restartTimeout": "5m",
                         "type": "WindowsRestart"
+                    },
+                    {
+                        "destination": "C:\\AVD\\InstallFSLogix.ps1",
+                        "name": "InstallFSLogix",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/FSLogix.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\AVD\\InstallFSLogix.ps1 -FSLogixInstaller \"https://download.microsoft.com/download/0/a/4/0a4c3a18-f6c8-4bcd-91fc-97ce845e2d3e/FSLogix_Apps_2.9.8361.52326.zip\" -VHDSize \"50000\" "
+                        ],
+                        "name": "InstallFSLogixPowershell",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "destination": "C:\\AVD\\MMR.ps1",
+                        "name": "MMR",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/MultiMediaRedirection.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\AVD\\MMR.ps1 -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\" -EnableEdge \"true\" -EnableChrome \"true\""
+                        ],
+                        "name": "MMRPowershell",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "name": "",
+                        "restartCheckCommand": "",
+                        "restartCommand": "",
+                        "restartTimeout": "5m",
+                        "type": "WindowsRestart"
                     }
             ],
             "distribute": 
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.3",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.5",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd11",

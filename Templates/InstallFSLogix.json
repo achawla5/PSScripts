@@ -101,7 +101,7 @@
                     },
                     {
                         "inline": [
-                            "C:\\AVD\\InstallFSLogix.ps1 -ProfilePath \"//akashaibcustomizations.file.core.windows.net/avdaibcustomizationscripts\" -VHDSize \"50000\" "
+                            "C:\\AVD\\InstallFSLogix.ps1 -ProfilePath \"https://download.microsoft.com/download/0/a/4/0a4c3a18-f6c8-4bcd-91fc-97ce845e2d3e/FSLogix_Apps_2.9.8361.52326.zip\" -VHDSize \"50000\" "
                         ],
                         "name": "InstallFSLogixPowershell",
                         "runAsSystem": true,
