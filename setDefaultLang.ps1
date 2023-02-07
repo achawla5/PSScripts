@@ -14,7 +14,7 @@
         [string]$Language,
 
         [Parameter(Mandatory=$false)]
-        [string]$TimeZone,
+        [string]$TimeZone
 )
 
 function Set-DefaultLanguage($Language, $TimeZone) {

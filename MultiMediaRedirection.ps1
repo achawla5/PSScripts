@@ -96,7 +96,7 @@ function InstallAndEnableMMR($VCRedistributableLink, $EnableChrome, $EnableEdge)
                     Write-host "AVD AIB Customization:  MultiMedia Redirection - Finished enabling extension for Microsoft Edge" 
                 }
 
-                if([System.Convert]::ToBoolean($EnableChrome) {
+                if([System.Convert]::ToBoolean($EnableChrome)) {
                      #Install Chrome and enable extension
                     Write-host "AVD AIB Customization:  MultiMedia Redirection - Checking if Google Chrome is installed"
 
