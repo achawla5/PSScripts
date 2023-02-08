@@ -113,6 +113,16 @@
                     "restartCommand": "",
                     "restartTimeout": "5m",
                     "type": "WindowsRestart"
+                },
+                {
+                    "type": "WindowsUpdate"
+                },
+                {
+                    "name": "",
+                    "restartCheckCommand": "",
+                    "restartCommand": "",
+                    "restartTimeout": "5m",
+                    "type": "WindowsRestart"
                 }
         ],
         "distribute": 
