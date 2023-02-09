@@ -14,13 +14,13 @@
     )]
     [ValidateSet('All','WindowsMediaPlayer','ScheduledTasks','DefaultUserSettings','Autologgers','Services','NetworkOptimizations','LGPO','DiskCleanup','Edge','RemoveLegacyIE', 'RemoveOneDrive')] 
     [String[]]$Optimizations
-)
+)   
 
 Begin {
 
         try {
             $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations"
+            Write-Host "AVD AIB Customization : Windows Optimizations"
 
             $WindowsVersion = (Get-ItemProperty "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\").ReleaseId
             $WorkingLocation = (Join-Path $PSScriptRoot $WindowsVersion)
@@ -28,7 +28,8 @@ Begin {
             if (!(Test-Path -Path $WorkingLocation)) {
                 New-Item -Path $WorkingLocation -ItemType Directory
             }
-            #Push-Location (Join-Path $PSScriptRoot $WindowsVersion)-ErrorAction Stop
+
+            Write-Host "AVD AIB Customization : Windows Optimizations - Windows version is $WindowsVersion"
         } 
         catch
         {
@@ -40,7 +41,7 @@ PROCESS {
 
     if (-not ($PSBoundParameters.Keys -match 'Optimizations') )
      {
-        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - No Optimizations (Optimizations or AdvancedOptimizations) passed, exiting script!"
+        Write-Host "AVD AIB Customization : Windows Optimizations - No Optimizations (Optimizations or AdvancedOptimizations) passed, exiting script!"
         Return
     }
 
@@ -48,16 +49,16 @@ PROCESS {
     If ($Optimizations -contains "WindowsMediaPlayer" -or $Optimizations -contains "All") {
         try
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - [VDI Optimize] Disable / Remove Windows Media Player" 
+            Write-Host "AVD AIB Customization : Windows Optimizations - [VDI Optimize] Disable / Remove Windows Media Player" 
             Disable-WindowsOptionalFeature -Online -FeatureName WindowsMediaPlayer -NoRestart | Out-Null
             Get-WindowsPackage -Online -PackageName "*Windows-mediaplayer*" | ForEach-Object { 
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Removing $($_.PackageName)" 
+                Write-Host "AVD AIB Customization : Windows Optimizations - Removing $($_.PackageName)" 
                 Remove-WindowsPackage -PackageName $_.PackageName -Online -ErrorAction SilentlyContinue -NoRestart | Out-Null
             }
         }
         catch 
         { 
-            Write-Host 'AVD AIB Customization : Windows Optimizations' 
+            Write-Host "AVD AIB Customization : Windows Optimizations - Disabling / Removing Windows Media Player - $($_.Exception.Message)"
         }
     }
     #endregion
@@ -68,51 +69,65 @@ PROCESS {
     # change its "VDIState" from Disabled to Enabled, or remove it from the json completely.
     If ($Optimizations -contains 'ScheduledTasks' -or $Optimizations -contains "All") {
 
-        $ScheduledTasksFilePath = Join-Path -Path $WorkingLocation -ChildPath 'ScheduledTasks.json'
-        $ScheduledTaskUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/ScheduledTasks.json"
-        Invoke-WebRequest $ScheduledTaskUrl -OutFile $ScheduledTasksFilePath -UseBasicParsing
-
-        If (Test-Path $ScheduledTasksFilePath)
+        try 
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - [VDI Optimize] Disable Scheduled Tasks" 
-            $SchTasksList = (Get-Content $ScheduledTasksFilePath | ConvertFrom-Json).Where( { $_.VDIState -eq 'Disabled' })
-            If ($SchTasksList.count -gt 0)
+            $ScheduledTasksFilePath = Join-Path -Path $WorkingLocation -ChildPath 'ScheduledTasks.json'
+
+            if($WindowsVersion -eq "2004") {
+                $ScheduledTaskUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2004/ConfigurationFiles/ScheduledTasks.json"
+            } 
+            else {
+                $ScheduledTaskUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/ScheduledTasks.json"
+            }
+
+            Invoke-WebRequest $ScheduledTaskUrl -OutFile $ScheduledTasksFilePath -UseBasicParsing
+
+            If (Test-Path $ScheduledTasksFilePath)
             {
-                Foreach ($Item in $SchTasksList)
+                Write-Host "AVD AIB Customization : Windows Optimizations - [VDI Optimize] Disable Scheduled Tasks" 
+                $SchTasksList = (Get-Content $ScheduledTasksFilePath | AVD AIBConvertFrom-Json).Where( { $_.VDIState -eq 'Disabled' })
+                If ($SchTasksList.count -gt 0)
                 {
-                    $TaskObject = Get-ScheduledTask $Item.ScheduledTask
-                    If ($TaskObject -and $TaskObject.State -ne 'Disabled')
+                    Foreach ($Item in $SchTasksList)
                     {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Attempting to disable Scheduled Task: $($TaskObject.TaskName)" 
-                        Write-Verbose "AVD AIB Customization : Windows Optimizations - Attempting to disable Scheduled Task: $($TaskObject.TaskName)"
-                        try
+                        $TaskObject = Get-ScheduledTask $Item.ScheduledTask
+                        If ($TaskObject -and $TaskObject.State -ne 'Disabled')
                         {
-                            Disable-ScheduledTask -InputObject $TaskObject | Out-Null
-                            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Disabled Scheduled Task: $($TaskObject.TaskName)"
+                            Write-Host "AVD AIB Customization : Windows Optimizations - Attempting to disable Scheduled Task: $($TaskObject.TaskName)" 
+                            Write-Verbose "AVD AIB Customization : Windows Optimizations - Attempting to disable Scheduled Task: $($TaskObject.TaskName)"
+                            try
+                            {
+                                Disable-ScheduledTask -InputObject $TaskObject | Out-Null
+                                Write-Host "AVD AIB Customization : Windows Optimizations- Disabled Scheduled Task: $($TaskObject.TaskName)"
+                            }
+                            catch
+                            {
+                                Write-Host "AVD AIB Customization : Windows Optimizations- Failed to disabled Scheduled Task: $($TaskObject.TaskName) - $($_.Exception.Message)"
+                            }
                         }
-                        catch
+                        ElseIf ($TaskObject -and $TaskObject.State -eq 'Disabled') 
                         {
-                            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Failed to disabled Scheduled Task: $($TaskObject.TaskName) - $($_.Exception.Message)"
+                            Write-Host "AVD AIB Customization : Windows Optimizations- $($TaskObject.TaskName) Scheduled Task is already disabled - $($_.Exception.Message)" 
                         }
-                    }
-                    ElseIf ($TaskObject -and $TaskObject.State -eq 'Disabled') 
-                    {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - $($TaskObject.TaskName) Scheduled Task is already disabled - $($_.Exception.Message)" 
-                    }
-                    Else
-                    {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Unable to find Scheduled Task: $($TaskObject.TaskName) - $($_.Exception.Message)" 
+                        Else
+                        {
+                            Write-Host "AVD AIB Customization : Windows Optimizations- Unable to find Scheduled Task: $($TaskObject.TaskName) - $($_.Exception.Message)" 
+                        }
                     }
                 }
+                Else
+                {
+                    Write-Host  "AVD AIB Customization : Windows Optimizations - No Scheduled Tasks found to disable" 
+                }
             }
-            Else
+            Else 
             {
-                Write-Host  "AVD AIB Customization : Windows Optimizations - No Scheduled Tasks found to disable" 
-            }
+                Write-Host  "AVD AIB Customization : Windows Optimizations - File not found! -  $ScheduledTasksFilePath"
+            }    
         }
-        Else 
+        catch 
         {
-            Write-Host  "AVD AIB Customization : Windows Optimizations - File not found! -  $ScheduledTasksFilePath"
+            Write-Host "AVD AIB Customization : Windows Optimizations - Scheduled tasks - $($_.Exception.Message)"
         }
     }
     #endregion
@@ -123,16 +138,23 @@ PROCESS {
     If ($Optimizations -contains "DefaultUserSettings" -or $Optimizations -contains "All")
     {
         $DefaultUserSettingsFilePath = Join-Path -Path $WorkingLocation -ChildPath 'DefaultUserSettings.json'
-        $DefaultUserSettingsUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/DefaultUserSettings.json"
+
+        if($WindowsVersion -eq "2004") {
+            $DefaultUserSettingsUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2004/ConfigurationFiles/DefaultUserSettings.json"
+        } 
+        else {
+            $DefaultUserSettingsUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/ScheduledTasks.json"
+        }
+
         Invoke-WebRequest $DefaultUserSettingsUrl -OutFile $DefaultUserSettingsFilePath -UseBasicParsing
 
         If (Test-Path $DefaultUserSettingsFilePath)
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Set Default User Settings"
+            Write-Host "AVD AIB Customization : Windows Optimizations - - Set Default User Settings"
             $UserSettings = (Get-Content $DefaultUserSettingsFilePath | ConvertFrom-Json).Where( { $_.SetProperty -eq $true })
             If ($UserSettings.Count -gt 0)
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Processing Default User Settings (Registry Keys)" 
+                Write-Host "AVD AIB Customization : Windows Optimizations - Processing Default User Settings (Registry Keys)" 
                 $null = Start-Process reg -ArgumentList "LOAD HKLM\VDOT_TEMP C:\Users\Default\NTUSER.DAT" -PassThru -Wait
                 # & REG LOAD HKLM\VDOT_TEMP C:\Users\Default\NTUSER.DAT | Out-Null
 
@@ -149,23 +171,23 @@ PROCESS {
 
                     If (Test-Path -Path ("{0}" -f $Item.HivePath))
                     {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Found $($Item.HivePath) - $($Item.KeyName)"
+                        Write-Host "AVD AIB Customization : Windows Optimizations - Found $($Item.HivePath) - $($Item.KeyName)"
 
                         If (Get-ItemProperty -Path ("{0}" -f $Item.HivePath) -ErrorAction SilentlyContinue)
                         {
-                            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Set $($Item.HivePath) - $Value"
+                            Write-Host "AVD AIB Customization : Windows Optimizations - Set $($Item.HivePath) - $Value"
                             Set-ItemProperty -Path ("{0}" -f $Item.HivePath) -Name $Item.KeyName -Value $Value -Type $Item.PropertyType -Force 
                         }
                         Else
                         {
-                            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - New $($Item.HivePath) Name $($Item.KeyName) PropertyType $($Item.PropertyType) Value $Value"
+                            Write-Host "AVD AIB Customization : Windows Optimizations- New $($Item.HivePath) Name $($Item.KeyName) PropertyType $($Item.PropertyType) Value $Value"
                             New-ItemProperty -Path ("{0}" -f $Item.HivePath) -Name $Item.KeyName -PropertyType $Item.PropertyType -Value $Value -Force | Out-Null
                         }
                     }
                     Else
                     {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Registry Path not found $($Item.HivePath)" 
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Creating new Registry Key $($Item.HivePath)"
+                        Write-Host "AVD AIB Customization : Windows Optimizations- Registry Path not found $($Item.HivePath)" 
+                        Write-Host "AVD AIB Customization : Windows Optimizations- Creating new Registry Key $($Item.HivePath)"
                         $newKey = New-Item -Path ("{0}" -f $Item.HivePath) -Force
                         If (Test-Path -Path $newKey.PSPath)
                         {
@@ -173,7 +195,7 @@ PROCESS {
                         }
                         Else
                         {
-                            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Failed to create new Registry Key" 
+                            Write-Host "AVD AIB Customization : Windows Optimizations- Failed to create new Registry Key" 
                         } 
                     }
                 }
@@ -182,12 +204,12 @@ PROCESS {
             }
             Else
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - No Default User Settings to set" 
+                Write-Host "AVD AIB Customization : Windows Optimizations- No Default User Settings to set" 
             }
         }
         Else
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - File not found: $DefaultUserSettingsFilePath"
+            Write-Host "AVD AIB Customization : Windows Optimizations- File not found: $DefaultUserSettingsFilePath"
         }    
     }
     #endregion
@@ -195,21 +217,28 @@ PROCESS {
      #region Disable Windows Traces
     If ($Optimizations -contains "AutoLoggers" -or $Optimizations -contains "All")
     {
+        if($WindowsVersion -eq "2004") {
+            $AutoLoggersUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2004/ConfigurationFiles/Autologgers.Json"
+        } 
+        else {
+            $AutoLoggersUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/Autologgers.Json"
+        }
+
         $AutoLoggersFilePath = Join-Path -Path $WorkingLocation -ChildPath 'Autologgers.json'
-        $AutoLoggersUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/Autologgers.Json"
+        
         Invoke-WebRequest $AutoLoggersUrl -OutFile $AutoLoggersFilePath -UseBasicParsing
       
         If (Test-Path $AutoLoggersFilePath)
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Disable AutoLoggers"
+            Write-Host "AVD AIB Customization : Windows Optimizations- Disable AutoLoggers"
 
             $DisableAutologgers = (Get-Content $AutoLoggersFilePath | ConvertFrom-Json).Where( { $_.Disabled -eq 'True' })
             If ($DisableAutologgers.count -gt 0)
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Disable AutoLoggers, Processing Autologger configuration file"
+                Write-Host "AVD AIB Customization : Windows Optimizations- Disable AutoLoggers, Processing Autologger configuration file"
                 Foreach ($Item in $DisableAutologgers)
                 {
-                    Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Updating Registry Key for: $($Item.KeyName)"
+                    Write-Host "AVD AIB Customization : Windows Optimizations- Updating Registry Key for: $($Item.KeyName)"
 
                     Try 
                     {
@@ -217,14 +246,14 @@ PROCESS {
                     }
                     Catch
                     {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Failed to add $($Item.KeyName)`n`n $($Error[0].Exception.Message)"
+                        Write-Host "AVD AIB Customization : Windows Optimizations- Failed to add $($Item.KeyName)`n`n $($Error[0].Exception.Message)"
                     }
                     
                 }
             }
             Else 
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - No Autologgers found to disable"
+                Write-Host "AVD AIB Customization : Windows Optimizations- No Autologgers found to disable"
             }
         }
         Else
@@ -239,18 +268,25 @@ PROCESS {
     #region Disable Services
     If ($Optimizations -contains "Services" -or $Optimizations -contains "All")
     {
+        if($WindowsVersion -eq "2004") {
+            $ServicesUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2004/ConfigurationFiles/Services.json"
+        } 
+        else {
+            $ServicesUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/Services.json"
+        }
+
         $ServicesFilePath = Join-Path -Path $WorkingLocation -ChildPath 'Services.json'
-        $ServicesUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/Services.json"
+        
         Invoke-WebRequest $ServicesUrl -OutFile $ServicesFilePath -UseBasicParsing
 
         If (Test-Path $ServicesFilePath)
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Disable Services" 
+            Write-Host "AVD AIB Customization : Windows Optimizations- Disable Services" 
             $ServicesToDisable = (Get-Content $ServicesFilePath | ConvertFrom-Json ).Where( { $_.VDIState -eq 'Disabled' })
 
             If ($ServicesToDisable.count -gt 0)
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Processing Services Configuration File" 
+                Write-Host "AVD AIB Customization : Windows Optimizations- Processing Services Configuration File" 
 
                 Foreach ($Item in $ServicesToDisable)
                 {
@@ -265,18 +301,18 @@ PROCESS {
                     #    Write-Host "AVD AIB Customization : Windows Optimizations - Failed to disable Service: $($Item.Name) `n $($_.Exception.Message)" -Source 'Services' -EntryType Error
                     #    Write-Warning "Failed to disable Service: $($Item.Name) `n $($_.Exception.Message)"
                     #}
-                    Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Attempting to disable Service $($Item.Name) - $($Item.Description)" 
+                    Write-Host "AVD AIB Customization : Windows Optimizations- Attempting to disable Service $($Item.Name) - $($Item.Description)" 
                     Set-Service $Item.Name -StartupType Disabled 
                 }
             }  
             Else
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - No Services found to disable" 
+                Write-Host "AVD AIB Customization : Windows Optimizations- No Services found to disable" 
             }
         }
         Else
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - File not found: $ServicesFilePath" 
+            Write-Host "AVD AIB Customization : Windows Optimizations- File not found: $ServicesFilePath" 
 
         }   
     }
@@ -286,49 +322,55 @@ PROCESS {
     # LanManWorkstation optimizations
     If ($Optimizations -contains "NetworkOptimizations" -or $Optimizations -contains "All")
     {
+        if($WindowsVersion -eq "2004") {
+            $NetworkOptimizationsUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2004/ConfigurationFiles/LanManWorkstation.json"
+        } 
+        else {
+           $NetworkOptimizationsUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/LanManWorkstation.json"
+        }
+
         $NetworkOptimizationsFilePath = Join-Path -Path $WorkingLocation -ChildPath 'LanManWorkstation.json'
-        $NetworkOptimizationsUrl = "https://raw.githubusercontent.com/The-Virtual-Desktop-Team/Virtual-Desktop-Optimization-Tool/main/2009/ConfigurationFiles/LanManWorkstation.json"
         Invoke-WebRequest $NetworkOptimizationsUrl -OutFile $NetworkOptimizationsFilePath -UseBasicParsing
         
         If (Test-Path $NetworkOptimizationsFilePath)
         {
-            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Configure LanManWorkstation Settings" 
+            Write-Host "AVD AIB Customization : Windows Optimizations- Configure LanManWorkstation Settings" 
             $LanManSettings = Get-Content $NetworkOptimizationsFilePath | ConvertFrom-Json
             If ($LanManSettings.Count -gt 0)
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Processing LanManWorkstation Settings ($($LanManSettings.Count) Hives)" 
+                Write-Host "AVD AIB Customization : Windows Optimizations- Processing LanManWorkstation Settings ($($LanManSettings.Count) Hives)" 
                 Foreach ($Hive in $LanManSettings)
                 {
                     If (Test-Path -Path $Hive.HivePath)
                     {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Found $($Hive.HivePath)" 
+                        Write-Host "AVD AIB Customization : Windows Optimizations- Found $($Hive.HivePath)" 
 
                         $Keys = $Hive.Keys.Where{ $_.SetProperty -eq $true }
                         If ($Keys.Count -gt 0)
                         {
-                            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Create / Update LanManWorkstation Keys" 
+                            Write-Host "AVD AIB Customization : Windows Optimizations- Create / Update LanManWorkstation Keys" 
                             Foreach ($Key in $Keys)
                             {
                                 If (Get-ItemProperty -Path $Hive.HivePath -Name $Key.Name -ErrorAction SilentlyContinue)
                                 {
-                                    Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Setting $($Hive.HivePath) -Name $($Key.Name) -Value $($Key.PropertyValue)" 
+                                    Write-Host "AVD AIB Customization : Windows Optimizations- Setting $($Hive.HivePath) -Name $($Key.Name) -Value $($Key.PropertyValue)" 
                                     Set-ItemProperty -Path $Hive.HivePath -Name $Key.Name -Value $Key.PropertyValue -Force
                                 }
                                 Else
                                 {
-                                    Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - New $($Hive.HivePath) -Name $($Key.Name) -Value $($Key.PropertyValue)" 
+                                    Write-Host "AVD AIB Customization : Windows Optimizations- New $($Hive.HivePath) -Name $($Key.Name) -Value $($Key.PropertyValue)" 
                                     New-ItemProperty -Path $Hive.HivePath -Name $Key.Name -PropertyType $Key.PropertyType -Value $Key.PropertyValue -Force | Out-Null
                                 }
                             }
                         }
                         Else
                         {
-                            Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - No LanManWorkstation Keys to create / update"
+                            Write-Host "AVD AIB Customization : Windows Optimizations- No LanManWorkstation Keys to create / update"
                         }  
                     }
                     Else
                     {
-                        Write-Host "AVD AIB Customization : Windows Optimizations - AVD AIB Customization : Windows Optimizations - Registry Path not found $($Hive.HivePath)"
+                        Write-Host "AVD AIB Customization : Windows Optimizations- Registry Path not found $($Hive.HivePath)"
                     }
                 }
             }
@@ -502,45 +544,55 @@ PROCESS {
 
     #endregion
 
-     #region Disk Cleanup
+    #region Disk Cleanup
     # Delete not in-use files in locations C:\Windows\Temp and %temp%
     # Also sweep and delete *.tmp, *.etl, *.evtx, *.log, *.dmp, thumbcache*.db (not in use==not needed)
     # 5/18/20: Removing Disk Cleanup and moving some of those tasks to the following manual cleanup
-        If ($Optimizations -contains "DiskCleanup" -or $Optimizations -contains "All")
-        {
-            Write-Host "AVD AIB Customization : Windows Optimizations - Removing .tmp, .etl, .evtx, thumbcache*.db, *.log files not in use"
-            Get-ChildItem -Path c:\ -Include *.tmp, *.dmp, *.etl, *.evtx, thumbcache*.db, *.log -File -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
+    If ($Optimizations -contains "DiskCleanup" -or $Optimizations -contains "All")
+    {
+        Write-Host "AVD AIB Customization : Windows Optimizations - Removing .tmp, .etl, .evtx, thumbcache*.db, *.log files not in use"
+        Get-ChildItem -Path c:\ -Include *.tmp, *.dmp, *.etl, *.evtx, thumbcache*.db, *.log -File -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -ErrorAction SilentlyContinue
 
-            # Delete "RetailDemo" content (if it exits)
-            Write-Host "AVD AIB Customization : Windows Optimizations - Removing Retail Demo content (if it exists)"
-            Get-ChildItem -Path $env:ProgramData\Microsoft\Windows\RetailDemo\* -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -ErrorAction SilentlyContinue
+        # Delete "RetailDemo" content (if it exits)
+        Write-Host "AVD AIB Customization : Windows Optimizations - Removing Retail Demo content (if it exists)"
+        Get-ChildItem -Path $env:ProgramData\Microsoft\Windows\RetailDemo\* -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Recurse -ErrorAction SilentlyContinue
 
-            # Delete not in-use anything in the C:\Windows\Temp folder
-            Write-Host "AVD AIB Customization : Windows Optimizations - Removing all files not in use in $env:windir\TEMP"
-            Remove-Item -Path $env:windir\Temp\* -Recurse -Force -ErrorAction SilentlyContinue -Exclude packer*.ps1
+        # Delete not in-use anything in the C:\Windows\Temp folder
+        Write-Host "AVD AIB Customization : Windows Optimizations - Removing all files not in use in $env:windir\TEMP"
+        Remove-Item -Path $env:windir\Temp\* -Recurse -Force -ErrorAction SilentlyContinue -Exclude packer*.ps1
 
-            # Clear out Windows Error Reporting (WER) report archive folders
-            Write-Host "AVD AIB Customization : Windows Optimizations - Cleaning up WER report archive"
-            Remove-Item -Path $env:ProgramData\Microsoft\Windows\WER\Temp\* -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item -Path $env:ProgramData\Microsoft\Windows\WER\ReportArchive\* -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item -Path $env:ProgramData\Microsoft\Windows\WER\ReportQueue\* -Recurse -Force -ErrorAction SilentlyContinue
+        # Clear out Windows Error Reporting (WER) report archive folders
+        Write-Host "AVD AIB Customization : Windows Optimizations - Cleaning up WER report archive"
+        Remove-Item -Path $env:ProgramData\Microsoft\Windows\WER\Temp\* -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $env:ProgramData\Microsoft\Windows\WER\ReportArchive\* -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $env:ProgramData\Microsoft\Windows\WER\ReportQueue\* -Recurse -Force -ErrorAction SilentlyContinue
 
-            # Delete not in-use anything in your %temp% folder
-            Write-Host "AVD AIB Customization : Windows Optimizations - Removing files not in use in $env:temp directory"
-            Remove-Item -Path $env:TEMP\* -Recurse -Force -ErrorAction SilentlyContinue -Exclude packer*.ps1
+        # Delete not in-use anything in your %temp% folder
+        Write-Host "AVD AIB Customization : Windows Optimizations - Removing files not in use in $env:temp directory"
+        Remove-Item -Path $env:TEMP\* -Recurse -Force -ErrorAction SilentlyContinue -Exclude packer*.ps1
 
-            # Clear out ALL visible Recycle Bins
-            Write-Host "AVD AIB Customization : Windows Optimizations - Clearing out ALL Recycle Bins"
-            Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+        # Clear out ALL visible Recycle Bins
+        Write-Host "AVD AIB Customization : Windows Optimizations - Clearing out ALL Recycle Bins"
+        Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 
-            # Clear out BranchCache cache
-            Write-Host "AVD AIB Customization : Windows Optimizations - Clearing BranchCache cache" 
-            Clear-BCCache -Force -ErrorAction SilentlyContinue
-        }    
+        # Clear out BranchCache cache
+        Write-Host "AVD AIB Customization : Windows Optimizations - Clearing BranchCache cache" 
+        Clear-BCCache -Force -ErrorAction SilentlyContinue
+    }    
     #endregion
 }
 END {
+    #Cleanup
+    if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
+        Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
+    }
+
+    if ((Test-Path -Path $WorkingLocation -ErrorAction SilentlyContinue)) {
+        Remove-Item -Path $WorkingLocation -Force -Recurse -ErrorAction Continue
+    }
+    
     $stopwatch.Stop()
     $elapsedTime = $stopwatch.Elapsed
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE :  MultiMedia Redirection -  Exit Code: $LASTEXITCODE ***"    
     Write-Host "AVD AIB Customization : Windows Optimizations - Ending AVD AIB Customization : Windows Optimizations - Time taken: $elapsedTime"
 }
