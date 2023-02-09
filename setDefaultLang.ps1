@@ -80,7 +80,7 @@ function Set-DefaultLanguage($Language, $TimeZone) {
         Set-WinUILanguageOverride -Language $LanguageTag
         Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
-        if(!($PSBoundParameters.ContainsKey('TimeZone'))) {
+        if(($PSBoundParameters.ContainsKey('TimeZone'))) {
             Set-TimeZone -Name $TimeZone -PassThru
             Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Timezone set to $TimeZone***"
         }
