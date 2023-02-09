@@ -80,16 +80,10 @@ function InstallAndEnableMMR($VCRedistributableLink, $EnableChrome, $EnableEdge)
                 msiexec.exe /i $mmrExePath /q
                 Write-Host "AVD AIB Customization:  MultiMedia Redirection - Finished installing the mmr host agent"
 
-                #Install Edge and enable extension
+                #Enable Edge extension
 
-                Write-host "AVD AIB Customization:  MultiMedia Redirection - Checking if Microsoft Edge is installed"
-                # $edgePackage = Get-AppxPackage -Name "*Edge*"
-
-                # if([string]::IsNullOrEmpty($edgePackage)) {
-                #      Write-host "AVD AIB Customization:  MultiMedia Redirection - Microsoft Edge is not installed - Installing latest version of Microsoft Edge"
-
-                # }
                 if([System.Convert]::ToBoolean($EnableEdge)) {
+                    Write-host "AVD AIB Customization:  MultiMedia Redirection - Starting to enable extension for Microsoft Edge" 
                     $registryValue = '{ "joeclbldhdmoijbaagobkhlpfjglcihd": { "installation_mode": "force_installed", "update_url": "https://edge.microsoft.com/extensionwebstorebase/v1/crx" } }';
                     New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Force
                     New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name ExtensionSettings -PropertyType String -Value $registryValue -Force  
@@ -148,16 +142,6 @@ function InstallAndEnableMMR($VCRedistributableLink, $EnableChrome, $EnableEdge)
             Write-Host "*** AVD AIB CUSTOMIZER PHASE :  MultiMedia Redirection -  Exit Code: $LASTEXITCODE ***"    
             Write-Host "Ending AVD AIB Customization :  MultiMedia Redirection - Time taken: $elapsedTime"
         }
- }
-
-function Set-RegKey($registryPath, $registryKey, $registryValue) {
-    try {
-         Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Teams Optimization  - Setting  $registryKey with value $registryValue ***"
-         New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
-    }
-    catch {
-         Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Teams Optimization  - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
-    }
  }
 
 InstallAndEnableMMR -VCRedistributableLink $VCRedistributableLink -EnableChrome $EnableChrome -EnableEdge $EnableEdge
