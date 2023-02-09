@@ -6,12 +6,6 @@
 #      Install and enable multimedia redirection         #
 ###########################################################
 
-# Install Edge
-# Install Chrome
-# Install Visual C++ Redistributable
-# Install host component
-# Install browser extension
-
 [CmdletBinding()] Param (
     [Parameter(
         Mandatory
