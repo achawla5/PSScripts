@@ -1,9 +1,6 @@
 {
-    "resources": [
-      {
-        "name": "akashaibwu",
         "type": "Microsoft.VirtualMachineImages/imageTemplates",
-        "apiVersion": "[parameters('api-version')]",
+        "apiVersion": "2019-05-01-preview",
         "location": "westus2",
         "dependsOn": [],
         "tags": {
@@ -110,8 +107,7 @@
                 }
             ]
             }
-        }
-    ]
+        
 }    
 
 
