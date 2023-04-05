@@ -9,11 +9,12 @@
           "type": "string"
         },
         "svclocation": {
-            "type": "westus2"
+            "type": "string"
         }
     },
     
     "variables": {
+        "svclocation": "westus2" 
     },
 
 
