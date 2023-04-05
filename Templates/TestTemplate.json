@@ -23,7 +23,7 @@
         "name": "[parameters('imageTemplateName')]",
         "type": "Microsoft.VirtualMachineImages/imageTemplates",
         "apiVersion": "[parameters('api-version')]",
-        "location": "[parameters('svclocation')]",
+        "location": "westus2",
         "dependsOn": [],
         "tags": {
             "forAvd2": "true",
