@@ -593,6 +593,6 @@ END {
     
     $stopwatch.Stop()
     $elapsedTime = $stopwatch.Elapsed
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE :  MultiMedia Redirection -  Exit Code: $LASTEXITCODE ***"    
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE : Windows Optimizations - Exit Code: $LASTEXITCODE ***"    
     Write-Host "AVD AIB Customization : Windows Optimizations - Ending AVD AIB Customization : Windows Optimizations - Time taken: $elapsedTime"
 }
