@@ -9,7 +9,7 @@
           "type": "string"
         },
         "svclocation": {
-            "type": "string"
+            "type": "westus2"
         }
     },
     
