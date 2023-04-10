@@ -25,28 +25,64 @@
                     "osDiskSizeGB": 127
                     },
         
-            "source": {
-                "type": "PlatformImage",
-                    "publisher": "MicrosoftWindowsDesktop",
-                    "offer": "windows-11",
-                    "sku": "win11-21h2-ent",
-                    "version": "latest"
-            },
+                    "source": {
+                        "offer": "office-365",
+                        "publisher": "microsoftwindowsdesktop",
+                        "sku": "win11-22h2-avd-m365",
+                        "type": "PlatformImage",
+                        "version": "latest"
+                    },
             "customize": [
-                {
-                    "type": "WindowsUpdate",
-                    "searchCriteria": "IsInstalled=0",
-                    "filters": [
-                      "include:$true"
-                    ],
-                    "updateLimit": 1
-                  }                
+                   {
+                        "destination": "C:\\installLanguagePacks.ps1",
+                        "name": "installLanguagePacks",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/installLanguagePacksV2.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\installLanguagePacks.ps1 -LanguageList \"English (Australia)\""
+                        ],
+                        "name": "LanguagePacksPowershell",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "name": "",
+                        "restartCheckCommand": "",
+                        "restartCommand": "",
+                        "restartTimeout": "10m",
+                        "type": "WindowsRestart"
+                    },
+                    {
+                        "destination": "C:\\SetDefaultLanguage.ps1",
+                        "name": "setDefaultLanguage",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\SetDefaultLanguage.ps1 -Language \"English (Australia)\""
+                        ],
+                        "name": "setDefaultLanguagePowershell",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "name": "",
+                        "restartCheckCommand": "",
+                        "restartCommand": "",
+                        "restartTimeout": "10m",
+                        "type": "WindowsRestart"
+                    }
             ],
             "distribute": 
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.13",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.14",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd11",
