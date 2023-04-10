@@ -1,6 +1,6 @@
 {
         "type": "Microsoft.VirtualMachineImages/imageTemplates",
-        "apiVersion": "2019-05-01-preview",
+        "apiVersion": "2022-02-14",
         "location": "westus2",
         "dependsOn": [],
         "tags": {
@@ -56,24 +56,33 @@
                         "type": "WindowsRestart"
                     },
                     {
-                        "type": "WindowsUpdate"
+                        "destination": "C:\\SetDefaultLanguage.ps1",
+                        "name": "setDefaultLanguage",
+                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\SetDefaultLanguage.ps1 -Language \"Spanish (Spain)\""
+                        ],
+                        "name": "setDefaultLanguagePowershell",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
                     },
                     {
                         "name": "",
-                        "type": "WindowsRestart",
-                        "restartCommand": "shutdown /r /f /t 0",
-                        "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM  > c:\\buildArtifacts\\azureImageBuilderRestart.txt",
-                        "restartTimeout": "5m"
-                    },
-                    {
-                        "type": "WindowsUpdate"
+                        "restartCheckCommand": "",
+                        "restartCommand": "",
+                        "restartTimeout": "10m",
+                        "type": "WindowsRestart"
                     }
             ],
             "distribute": 
             [
                 {   
                     "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.9",
+                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.11",
                     "runOutputName": "aibimg04",
                     "artifactTags": {
                         "source": "wvd11",
