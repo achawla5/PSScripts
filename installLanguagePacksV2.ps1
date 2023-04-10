@@ -77,6 +77,7 @@ function Install-LanguagePack {
 
         foreach ($Language in $LanguageList) {
 
+            # retry in case we hit transient errors
             for($i=1; $i -le 5; $i++) {
                  try {
                      Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs -  Attempt: $i ***"   
