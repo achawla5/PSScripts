@@ -24,6 +24,7 @@ Begin {
 
             $WindowsVersion = (Get-ItemProperty "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\").ReleaseId
             $WorkingLocation = (Join-Path $PSScriptRoot $WindowsVersion)
+            $templateFilePathFolder = "C:\AVDImage"
 
             if (!(Test-Path -Path $WorkingLocation)) {
                 New-Item -Path $WorkingLocation -ItemType Directory
