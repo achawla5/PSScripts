@@ -68,6 +68,39 @@ $LanguagesDictionary.Add("English (Australia)",	"en-AU")
 $LanguageTag = $LanguagesDictionary.$Language 
 
 try {
+
+  $foundLanguage = $false;
+
+  #install language pack in case the provided language is not installed
+  $installedLanguages = Get-InstalledLanguage
+  foreach($languagePack in $installedLanguages) {
+    $languageID = $languagePack.LanguageId
+    if($languageID -eq $LanguageTag) {
+      $foundLanguage = $true
+      break
+    }
+  }
+
+  if(-Not $foundLanguage) {
+    # retry in case we hit transient errors
+    for($i=1; $i -le 5; $i++) {
+        try {
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Attempt: $i ***"   
+            Install-Language -Language $LanguageTag
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default lanhguage - Install language packs -  Installed language $LanguageCode ***"   
+            break
+        }
+        catch {
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs - Exception occurred***"
+            Write-Host $PSItem.Exception
+            continue
+        }
+    }
+  }
+  else {
+     Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Language pack for $LanguageTag is installed already***"
+  }
+
   Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
