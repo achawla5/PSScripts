@@ -14,7 +14,7 @@
         [string]$Language,
 
         [Parameter(Mandatory=$false)]
-        [string]$TimeZone
+        [string]$TimeZoneID
 )
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -108,9 +108,9 @@ try {
   Set-WinUserLanguageList -LanguageList $LanguageTag -Force
   Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
-  if(($PSBoundParameters.ContainsKey('TimeZone'))) {
-      Set-TimeZone -Name $TimeZone -PassThru
-      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Timezone set to $TimeZone***"
+  if(($PSBoundParameters.ContainsKey('TimeZoneID'))) {
+      Set-TimeZone -Id $TimeZoneID -PassThru
+      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Timezone set to $TimeZoneID***"
   }
 } 
 catch {
