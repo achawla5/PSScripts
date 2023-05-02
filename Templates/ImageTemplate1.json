@@ -5,7 +5,7 @@
             "publisher": "microsoftwindowsdesktop",
             "sku": "win10-22h2-avd-m365",
             "type": "PlatformImage",
-            "version": "latest (19045.2846.230411)"
+            "version": "latest"
         },
         "customize": [
             {
