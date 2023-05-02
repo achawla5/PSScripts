@@ -85,7 +85,7 @@
                     "distribute": [
                         {
                             "artifactTags": {},
-                            "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/AkashTimezoneLP1",
+                            "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/AkashTimezoneLP2",
                             "location": "northeurope",
                             "runOutputName": "TimezoneCust1",
                             "type": "ManagedImage"
