@@ -1,20 +1,22 @@
 {
         "type": "Microsoft.VirtualMachineImages/imageTemplates",
         "apiVersion": "2020-02-14",
-        "location": "westus2",
+        "location": "northeurope",
         "dependsOn": [],
         "tags": {
             "forAvd2": "true",
             "imagebuilderTemplate": "AzureImageBuilderSIG",
             "userIdentity": "enabled"
                 },
-            "identity": {
-                "type": "UserAssigned",
-                        "userAssignedIdentities": {
-                        "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourcegroups/akas-aib/providers/Microsoft.ManagedIdentity/userAssignedIdentities/akas-aibIdentity01": {}
-                            
+                "identity": {
+                    "type": "UserAssigned",
+                    "userAssignedIdentities": {
+                        "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourcegroups/1TomTest1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/1TomTest1Identity": {
+                            "principalId": "b14b73a7-0a07-46a1-8c2d-e62b9fef0338",
+                            "clientId": "66a7ddf4-44d0-4d80-b167-4335d487f9f2"
+                        }
                     }
-                    },
+                },
         
         "properties": {
             "buildTimeoutInMinutes" : 800,
@@ -25,40 +27,250 @@
                     "osDiskSizeGB": 127
                     },
         
-            "source": {
-                "type": "PlatformImage",
-                    "publisher": "MicrosoftWindowsDesktop",
-                    "offer": "windows-11",
-                    "sku": "win11-21h2-ent",
-                    "version": "latest"
-            },
-            "customize": [
-                {
-                    "filters": [
-                        "include:$true"
-                    ],
-                    "name": "",
-                    "searchCriteria": "IsInstalled=0",
-                    "type": "WindowsUpdate",
-                    "updateLimit": 1
-                }
-            ],
-            "distribute": 
-            [
-                {   
-                    "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsigv2/images/akaswvdaibV2/versions/1.0.13",
-                    "runOutputName": "aibimg04",
-                    "artifactTags": {
-                        "source": "wvd11",
-                        "baseosimg": "windows11"
+                    "source": {
+                        "offer": "office-365",
+                        "publisher": "microsoftwindowsdesktop",
+                        "sku": "win10-22h2-avd-m365",
+                        "type": "PlatformImage",
+                        "version": "latest"
                     },
-                    "replicationRegions": [
-                      "westus2"
-
+                    "customize": [
+                        {
+                            "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
+                            "name": "avdBuiltInScript_installLanguagePacks",
+                            "sha256Checksum": "dd222a14ba4c2e70fadea13e0d03ea7acb45dc1e05ea2aa143e16a2562ee6948",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/InstallLanguagePacks.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"English (United Kingdom)\",\"English (Australia)\",\"French (France)\""
+                            ],
+                            "name": "avdBuiltInScript_installLanguagePacks-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "name": "avdBuiltInScript_installLanguagePacks-windowsRestart",
+                            "restartCheckCommand": "",
+                            "restartCommand": "",
+                            "restartTimeout": "10m",
+                            "type": "WindowsRestart"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\setDefaultLanguage.ps1",
+                            "name": "avdBuiltInScript_setDefaultLanguage",
+                            "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\setDefaultLanguage.ps1 -Language \"English (Australia)\" -TimeZoneID \"W. Europe Standard Time\""
+                            ],
+                            "name": "avdBuiltInScript_setDefaultLanguage-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "name": "avdBuiltInScript_setDefaultLanguage-windowsRestart",
+                            "restartCheckCommand": "",
+                            "restartCommand": "",
+                            "restartTimeout": "5m",
+                            "type": "WindowsRestart"
+                        },
+                        {
+                            "name": "avdBuiltInScript_disableStorageSense",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/DisableStorageSense.ps1",
+                            "sha256Checksum": "003a38ad2601c682bd906a429855dd70aebcb31714b5146dbbc6bacc059d50e1",
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\enableFslogix.ps1",
+                            "name": "avdBuiltInScript_enableFsLogix",
+                            "sha256Checksum": "2715e9ab90be142d179f66a277e828e0e16388c3ba511af6cb244fa6df94f04e",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/FSLogix.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\enableFslogix.ps1 -ProfilePath \"\\\\share\\folder\" -FSLogixInstaller \"https://download.microsoft.com/download/e/a/1/ea1bcf0a-e66d-48d2-ac9f-e385e5a7456e/FSLogix_Apps_2.9.8171.14983.zip\""
+                            ],
+                            "name": "avdBuiltInScript_enableFsLogix-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "name": "avdBuiltInScript_fsLogixKerberos",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/FSLogixKerberos.ps1",
+                            "sha256Checksum": "52fef3434ca95f17cfe79fa65eb961e69239b2d249df0bd0dfabaff81bd3acee",
+                            "type": "PowerShell"
+                        },
+                        {
+                            "name": "avdBuiltInScript_configureRdpShortpath",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/RDPShortpath.ps1",
+                            "sha256Checksum": "2c93bfac27484c02a685bfa9bca1d4c4566f1477dbf73d3f3d975cbe431fb12e",
+                            "type": "PowerShell"
+                        },
+                        {
+                            "name": "avdBuiltInScript_screenCaptureProtection",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/ScreenCaptureProtection.ps1",
+                            "sha256Checksum": "b391d04e833ffc935453a1278afe3de5f99710cdb7e7c18c6d00326d8e761c43",
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\TeamsOptimization.ps1",
+                            "name": "avdBuiltInScript_teamsOptimization",
+                            "sha256Checksum": "7829fb78e6367b60a8cc7244ff471bbb9ba2e580647b98a976a1a6979f7f7bd9",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/TeamsOptimization.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\TeamsOptimization.ps1 -TeamsDownloadLink \"https://teams.microsoft.com/downloads/desktopurl?env=production&plat=windows&arch=x64&managedInstaller=true&download=true\" -WebRTCInstaller \"https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWWDIg\" -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\""
+                            ],
+                            "name": "avdBuiltInScript_teamsOptimization-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\configureSessionTimeouts.ps1",
+                            "name": "avdBuiltInScript_configureSessionTimeouts",
+                            "sha256Checksum": "504f4ddd3960345765d86417d22b1791f3dd4a2ffe57f93ae32709cb7b87c23d",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/ConfigureSessionTimeoutsV2.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\configureSessionTimeouts.ps1 -MaxDisconnectionTime \"7200\" -MaxIdleTime \"5760\" -MaxConnectionTime \"2880\" -RemoteAppLogoffTimeLimit \"720\""
+                            ],
+                            "name": "avdBuiltInScript_configureSessionTimeouts-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\multiMediaRedirection.ps1",
+                            "name": "avdBuiltInScript_multiMediaRedirection",
+                            "sha256Checksum": "8e6d6f737fe7931acc670ceb1a9e545f8ca583797f0b3497d16baa076bb573a4",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/MultiMediaRedirection.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\multiMediaRedirection.ps1 -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\" -EnableEdge \"true\" -EnableChrome \"true\""
+                            ],
+                            "name": "avdBuiltInScript_multiMediaRedirection-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\windowsOptimization.ps1",
+                            "name": "avdBuiltInScript_windowsOptimization",
+                            "sha256Checksum": "089d824635434db0b7b31b0bad25f4ca836661f46e31297b077417a18789fbf3",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/WindowsOptimization.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\windowsOptimization.ps1 -Optimizations \"WindowsMediaPlayer\",\"ScheduledTasks\",\"DefaultUserSettings\",\"Autologgers\",\"Services\",\"NetworkOptimizations\",\"LGPO\",\"DiskCleanup\",\"Edge\",\"RemoveLegacyIE\",\"RemoveOneDrive\""
+                            ],
+                            "name": "avdBuiltInScript_windowsOptimization-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\removeAppxPackages.ps1",
+                            "name": "avdBuiltInScript_removeAppxPackages",
+                            "sha256Checksum": "935aadfd743205a385413187c251b0f60edb910e86b7a608712414400d9b4919",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/RemoveAppxPackages.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\removeAppxPackages.ps1 -AppxPackages \"Microsoft.BingNews\",\"Microsoft.BingWeather\",\"Microsoft.GamingApp\",\"Microsoft.GetHelp\""
+                            ],
+                            "name": "avdBuiltInScript_removeAppxPackages-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\OfficeApps.ps1",
+                            "name": "avdBuiltInScript_addOfficeApps",
+                            "sha256Checksum": "17d041ded9cd4503b792fb9d978ad74fb268af5e9f99146832273283ce0b14af",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/ConfigureOfficeApps.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\OfficeApps.ps1 -Type \"Add\" -Applications \"Visio\",\"Project\" -Version \"64\""
+                            ],
+                            "name": "avdBuiltInScript_addOfficeApps-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "destination": "C:\\AVDImage\\OfficeApps.ps1",
+                            "name": "avdBuiltInScript_removeOfficeApps",
+                            "sha256Checksum": "17d041ded9cd4503b792fb9d978ad74fb268af5e9f99146832273283ce0b14af",
+                            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/ConfigureOfficeApps.ps1",
+                            "type": "File"
+                        },
+                        {
+                            "inline": [
+                                "C:\\AVDImage\\OfficeApps.ps1 -Type \"Remove\" -Applications \"Publisher\" -Version \"64\""
+                            ],
+                            "name": "avdBuiltInScript_removeOfficeApps-parameter",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "type": "PowerShell"
+                        },
+                        {
+                            "name": "avdBuiltInScript_windowsUpdate",
+                            "searchCriteria": "",
+                            "type": "WindowsUpdate",
+                            "updateLimit": 0
+                        },
+                        {
+                            "name": "avdBuiltInScript_windowsUpdate-windowsRestart",
+                            "restartCheckCommand": "",
+                            "restartCommand": "",
+                            "restartTimeout": "",
+                            "type": "WindowsRestart"
+                        },
+                        {
+                            "name": "avdBuiltInScript_adminSysPrep",
+                            "runAsSystem": true,
+                            "runElevated": true,
+                            "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/AdminSysPrep.ps1",
+                            "sha256Checksum": "caf1c9055948e194f43dfe2aff80e4b882afa10b521f29a36d222dfaa57d4a5b",
+                            "type": "PowerShell"
+                        }
+                    ],
+                    "distribute": [
+                        {
+                            "artifactTags": {},
+                            "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/AkashAllCust2Win10",
+                            "location": "northeurope",
+                            "runOutputName": "AllCust2",
+                            "type": "ManagedImage"
+                        }
                     ]
-                }
-            ]
             }
         
 }    
