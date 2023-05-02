@@ -74,13 +74,6 @@
                             "type": "PowerShell"
                         },
                         {
-                            "name": "avdBuiltInScript_setDefaultLanguage-windowsRestart",
-                            "restartCheckCommand": "",
-                            "restartCommand": "",
-                            "restartTimeout": "10m",
-                            "type": "WindowsRestart"
-                        },
-                        {
                             "name": "avdBuiltInScript_disableStorageSense",
                             "runAsSystem": true,
                             "runElevated": true,
@@ -265,9 +258,9 @@
                     "distribute": [
                         {
                             "artifactTags": {},
-                            "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/AkashAllCust2Win10",
+                            "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/AkashAllCust3Win10",
                             "location": "northeurope",
-                            "runOutputName": "AllCust2",
+                            "runOutputName": "AllCust3",
                             "type": "ManagedImage"
                         }
                     ]
