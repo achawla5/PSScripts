@@ -169,7 +169,7 @@ try {
       }
 
       try {
-          New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType REG_SZ -Force | Out-Null
+          New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType String -Force | Out-Null
       }
       catch {
           Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - Cannot add the registry key $registryKey ***"
