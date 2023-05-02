@@ -158,7 +158,7 @@ try {
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default region***"
   }
 
-  if(($PSBoundParameters.ContainsKey('TimeZoneID'))) {
+ # if(($PSBoundParameters.ContainsKey('TimeZoneID'))) {
 
       $timezoneInfo = Get-Timezone -Id $TimeZoneID
 
@@ -182,7 +182,7 @@ try {
         Set-TimeZone -InputObject $timezoneInfo -PassThru 
         Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Timezone set to $TimeZoneID***"
       }
-  }
+  #}
 } 
 catch {
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
