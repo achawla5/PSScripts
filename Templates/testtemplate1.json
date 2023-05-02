@@ -1,0 +1,94 @@
+{
+"type": "Microsoft.VirtualMachineImages/imageTemplates",
+"apiVersion": "2020-02-14",
+"location": "westus2",
+"dependsOn": [],
+"tags": {
+    "forAvd2": "true",
+    "imagebuilderTemplate": "AzureImageBuilderSIG",
+    "userIdentity": "enabled"
+        },
+    "identity": {
+        "type": "UserAssigned",
+                "userAssignedIdentities": {
+                "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourcegroups/akas-aib/providers/Microsoft.ManagedIdentity/userAssignedIdentities/akas-aibIdentity01": {}
+
+            }
+            },
+
+"properties": {
+    "buildTimeoutInMinutes" : 800,
+    "osDiskSizeGB": 127
+},
+
+    "source": {
+        "type": "PlatformImage",
+            "publisher": "MicrosoftWindowsDesktop",
+            "offer": "windows-11",
+            "sku": "win11-21h2-ent",
+            "version": "latest"
+    },
+    "customize": [
+        {
+            "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
+            "name": "avdBuiltInScript_installLanguagePacks",
+            "sha256Checksum": "dd222a14ba4c2e70fadea13e0d03ea7acb45dc1e05ea2aa143e16a2562ee6948",
+            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/InstallLanguagePacks.ps1",
+            "type": "File"
+        },
+        {
+            "inline": [
+                "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"English (United Kingdom)\",\"English (Australia)\",\"French (France)\""
+            ],
+            "name": "avdBuiltInScript_installLanguagePacks-parameter",
+            "runAsSystem": true,
+            "runElevated": true,
+            "type": "PowerShell"
+        },
+        {
+            "type": "WindowsRestart",
+            "restartCommand": "shutdown /r /f /t 0",
+            "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM  > c:\\buildArtifacts\\azureImageBuilderRestart.txt",
+            "restartTimeout": "10m"
+        },
+        {
+            "destination": "C:\\AVDImage\\setDefaultLanguage.ps1",
+            "name": "avdBuiltInScript_setDefaultLanguage",
+            "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
+            "type": "File"
+        },
+        {
+            "inline": [
+                "C:\\AVDImage\\setDefaultLanguage.ps1 -Language \"English (Australia)\" -TimeZoneID \"W. Europe Standard Time\""
+            ],
+            "name": "avdBuiltInScript_setDefaultLanguage-parameter",
+            "runAsSystem": true,
+            "runElevated": true,
+            "type": "PowerShell"
+        },
+        {
+            "type": "WindowsRestart",
+            "restartCommand": "shutdown /r /f /t 0",
+            "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM  > c:\\buildArtifacts\\azureImageBuilderRestart.txt",
+            "restartTimeout": "5m"
+        },
+        {
+            "name": "avdBuiltInScript_adminSysPrep",
+            "runAsSystem": true,
+            "runElevated": true,
+            "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/AdminSysPrep.ps1",
+            "sha256Checksum": "caf1c9055948e194f43dfe2aff80e4b882afa10b521f29a36d222dfaa57d4a5b",
+            "type": "PowerShell"
+        }
+    ],
+    "distribute": 
+    [
+        {
+            "artifactTags": {},
+            "imageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/images/AkashTimezone1",
+            "location": "westus2",
+            "runOutputName": "TimezoneCust",
+            "type": "ManagedImage"
+        }
+    ]
+}
