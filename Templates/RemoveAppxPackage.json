@@ -70,20 +70,13 @@
                         "type": "PowerShell"
                     }
             ],
-            "distribute": 
-            [
-                {   
-                    "type": "SharedImage",
-                    "galleryImageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/galleries/akasaibsig1/images/akaswin10wvd/versions/1.0.9",
-                    "runOutputName": "aibimg04",
-                    "artifactTags": {
-                        "source": "wvd10",
-                        "baseosimg": "windows10"
-                    },
-                    "replicationRegions": [
-                      "westus2"
-
-                    ]
+            "distribute": [
+                {
+                    "artifactTags": {},
+                    "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/AkashAllCust2Win10",
+                    "location": "northeurope",
+                    "runOutputName": "AllCust2",
+                    "type": "ManagedImage"
                 }
             ]
             }
