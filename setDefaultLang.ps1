@@ -143,6 +143,7 @@ try {
      Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Language pack for $LanguageTag is installed already***"
   }
 
+  Install-Language -Language $LanguageTag -CopyToSettings 
   Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
@@ -156,7 +157,24 @@ try {
   }
 
   if(($PSBoundParameters.ContainsKey('TimeZoneID'))) {
+
       $timezoneInfo = Get-Timezone -Id $TimeZoneID
+
+      $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Control\TimeZoneInformation"
+      $registryKey= "TimeZoneKeyName"
+      $registryValue = $TimeZoneID
+
+      IF(!(Test-Path $registryPath)) {
+        New-Item -Path $registryPath -Force | Out-Null
+      }
+
+      try {
+          New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType REG_SZ -Force | Out-Null
+      }
+      catch {
+          Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - Cannot add the registry key $registryKey ***"
+          Write-Host "Message: [$($_.Exception.Message)"]
+      } 
 
       if($null -ne $timezoneInfo) {
         Set-TimeZone -InputObject $timezoneInfo -PassThru 
