@@ -47,6 +47,16 @@ function Get-RegionInfo($Name='*')
      }
 }
 
+function Set-RegKey($registryPath, $registryKey, $registryValue) {
+    try {
+         Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set Default language - Setting  $registryKey with value $registryValue ***"
+         New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
+    }
+    catch {
+         Write-Host "*** AVD AIB CUSTOMIZER PHASE ***   Set Default language  - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
+    }
+ }
+
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 Write-Host "*** Starting AVD AIB CUSTOMIZER PHASE: Set default Language ***"
@@ -166,19 +176,28 @@ try {
       $registryKey= "TimeZoneKeyName"
       $registryValue = $TimeZoneID
 
+      $timezoneSyncRegPath = "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters"
+      $timezoneSyncRegistryKey = "Type"
+      $timezoneSyncRegistryValue = "NoSync"
+
       IF(!(Test-Path $registryPath)) {
         New-Item -Path $registryPath -Force | Out-Null
       }
 
+      IF(!(Test-Path $timeZoneNoSyncRegPath)) {
+        New-Item -Path $registryPath -Force | Out-Null
+      }
+
+      Set-RegKey -registryPath $timezoneSyncRegPath -registryKey $timezoneSyncRegistryKey -registryValue $timezoneSyncRegistryValue
+      Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+
       try {
-          Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - setting $registryKey with value $registryValue***"
-          New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType String -Force | Out-Null
-          tzutil /s $TimeZoneID
+        tzutil /s $TimeZoneID
       }
       catch {
-          Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - Cannot add the registry key $registryKey ***"
-          Write-Host "Message: [$($_.Exception.Message)"]
-      } 
+        Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
+        Write-Host $PSItem.Exception
+      }
 
       if($null -ne $timezoneInfo) {
         Set-TimeZone -InputObject $timezoneInfo -PassThru 
