@@ -47,10 +47,10 @@ function Get-RegionInfo($Name='*')
      }
 }
 
-function Set-RegKey($registryPath, $registryKey, $registryValue) {
+function Set-RegKey($registryPath, $registryKey, $registryValue, $propertyType) {
     try {
          Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set Default language - Setting  $registryKey with value $registryValue ***"
-         New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
+         New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType $propertyType -Force -ErrorAction Stop
     }
     catch {
          Write-Host "*** AVD AIB CUSTOMIZER PHASE ***   Set Default language  - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
@@ -184,12 +184,12 @@ try {
         New-Item -Path $registryPath -Force | Out-Null
       }
 
-      IF(!(Test-Path $timeZoneNoSyncRegPath)) {
+      IF(!(Test-Path $timezoneSyncRegPath)) {
         New-Item -Path $registryPath -Force | Out-Null
       }
 
-      Set-RegKey -registryPath $timezoneSyncRegPath -registryKey $timezoneSyncRegistryKey -registryValue $timezoneSyncRegistryValue
-      Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+      Set-RegKey -registryPath $timezoneSyncRegPath -registryKey $timezoneSyncRegistryKey -registryValue $timezoneSyncRegistryValue -propertyType String
+      Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue -propertyType String
 
       try {
         tzutil /s $TimeZoneID
