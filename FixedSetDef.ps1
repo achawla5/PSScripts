@@ -171,7 +171,9 @@ try {
       }
 
       try {
+          Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - setting $registryKey with value $registryValue***"
           New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType String -Force | Out-Null
+          tzutil /s $TimeZoneID
       }
       catch {
           Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - Cannot add the registry key $registryKey ***"
