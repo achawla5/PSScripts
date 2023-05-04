@@ -184,10 +184,6 @@ try {
         New-Item -Path $registryPath -Force | Out-Null
       }
 
-      IF(!(Test-Path $timezoneSyncRegPath)) {
-        New-Item -Path $registryPath -Force | Out-Null
-      }
-
       # Set-RegKey -registryPath $timezoneSyncRegPath -registryKey $timezoneSyncRegistryKey -registryValue $timezoneSyncRegistryValue -propertyType String
       Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue -propertyType String
       Set-RegKey -registryPath $registryPath -registryKey "StandardName" -registryValue $timezoneInfo.StandardName -propertyType String
