@@ -176,9 +176,9 @@ try {
       $registryKey= "TimeZoneKeyName"
       $registryValue = $TimeZoneID
 
-      $timezoneSyncRegPath = "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters"
-      $timezoneSyncRegistryKey = "Type"
-      $timezoneSyncRegistryValue = "NoSync"
+      # $timezoneSyncRegPath = "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Parameters"
+      # $timezoneSyncRegistryKey = "Type"
+      # $timezoneSyncRegistryValue = "NoSync"
 
       IF(!(Test-Path $registryPath)) {
         New-Item -Path $registryPath -Force | Out-Null
@@ -188,8 +188,9 @@ try {
         New-Item -Path $registryPath -Force | Out-Null
       }
 
-      Set-RegKey -registryPath $timezoneSyncRegPath -registryKey $timezoneSyncRegistryKey -registryValue $timezoneSyncRegistryValue -propertyType String
+      # Set-RegKey -registryPath $timezoneSyncRegPath -registryKey $timezoneSyncRegistryKey -registryValue $timezoneSyncRegistryValue -propertyType String
       Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue -propertyType String
+      Set-RegKey -registryPath $registryPath -registryKey "StandardName" -registryValue $timezoneInfo.StandardName -propertyType String
 
       try {
         tzutil /s $TimeZoneID
@@ -203,6 +204,9 @@ try {
         Set-TimeZone -InputObject $timezoneInfo -PassThru 
         Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Timezone set to $TimeZoneID***"
       }
+
+      Get-TimeZone
+      tzutil /g
   #}
 } 
 catch {
