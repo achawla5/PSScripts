@@ -11,38 +11,34 @@
   Param (
         [Parameter(Mandatory)]
         [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)", "English (Australia)", "English (United States)")]
-        [string]$Language,
-
-        [Parameter(Mandatory=$false)]
-        [string]$TimeZoneID
+        [string]$Language
 )
 
 function Get-RegionInfo($Name='*')
 {
+  try {
     $cultures = [System.Globalization.CultureInfo]::GetCultures('InstalledWin32Cultures')
 
-	foreach($culture in $cultures)
-	{
-   		try{
-            
-            if($culture.DisplayName -eq $Name) {
-                $languageTag = $culture.Name
-                break;
-            }
-   		}
-   		catch {
-         Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred while getting region information***"
-        Write-Host $PSItem.Exception
+    foreach($culture in $cultures)
+    {        
+      if($culture.DisplayName -eq $Name) {
+        $languageTag = $culture.Name
+        break;
       }
-      
-     }
+    }
 
-     if($null -eq $culture) {
-       return
-     } else {
-       $region = [System.Globalization.RegionInfo]$culture.Name
-       return @($languageTag, $region.GeoId)
-     }
+    if($null -eq $languageTag) {
+        return
+    } else {
+        $region = [System.Globalization.RegionInfo]$culture.Name
+        return @($languageTag, $region.GeoId)
+    }
+  }
+  catch {
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred while getting region information***"
+    Write-Host $PSItem.Exception
+    return
+  }
 }
 
 
@@ -154,32 +150,6 @@ try {
   if($null -ne $GeoID) {
     Set-WinHomeLocation -GeoID $GeoID
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default region***"
-  }
-
-  if(($PSBoundParameters.ContainsKey('TimeZoneID'))) {
-
-      $timezoneInfo = Get-Timezone -Id $TimeZoneID
-
-      $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Control\TimeZoneInformation"
-      $registryKey= "TimeZoneKeyName"
-      $registryValue = $TimeZoneID
-
-      IF(!(Test-Path $registryPath)) {
-        New-Item -Path $registryPath -Force | Out-Null
-      }
-
-      try {
-          New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType String -Force | Out-Null
-      }
-      catch {
-          Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - Cannot add the registry key $registryKey ***"
-          Write-Host "Message: [$($_.Exception.Message)"]
-      } 
-
-      if($null -ne $timezoneInfo) {
-        Set-TimeZone -InputObject $timezoneInfo -PassThru 
-        Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Timezone set to $TimeZoneID***"
-      }
   }
 } 
 catch {
