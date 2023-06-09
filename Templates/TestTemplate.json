@@ -11,9 +11,9 @@
 "identity": {
 "type": "UserAssigned",
 "userAssignedIdentities": {
-    "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourcegroups/1TomTest1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/1TomTest1Identity": {
-        "principalId": "b14b73a7-0a07-46a1-8c2d-e62b9fef0338",
-        "clientId": "66a7ddf4-44d0-4d80-b167-4335d487f9f2"
+    "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourcegroups/akas1-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/akashaibIdentity1": {
+        "principalId": "eef75a73-5a8c-475f-b83d-78e44dd99399",
+        "clientId": "7b5f0ffd-6af6-49d8-bf14-5fdd6190b6a2"
     }
 }
 },
