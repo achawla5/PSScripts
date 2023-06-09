@@ -1,7 +1,7 @@
 {
 "type": "Microsoft.VirtualMachineImages/imageTemplates",
 "apiVersion": "2020-02-14",
-"location": "northeurope",
+"location": "eastus",
 "dependsOn": [],
 "tags": {
 "forAvd2": "true",
@@ -70,7 +70,7 @@
     {
         "artifactTags": {},
         "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/AkashLPval1",
-        "location": "northeurope",
+        "location": "eastus",
         "runOutputName": "LP1",
         "type": "ManagedImage"
     }
