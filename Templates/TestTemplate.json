@@ -38,7 +38,6 @@
     {
         "destination": "C:\\AVDImage\\installLanguagePacks1.ps1",
         "name": "avdBuiltInScript_installLanguagePacks",
-        "sha256Checksum": "dd222a14ba4c2e70fadea13e0d03ea7acb45dc1e05ea2aa143e16a2562ee6948",
         "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/installLanguagePacksV2.ps1",
         "type": "File"
     },
