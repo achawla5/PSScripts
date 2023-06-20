@@ -5,13 +5,30 @@
 #######################################
 #     Screen capture protection       #
 #######################################
+[CmdletBinding()]
+  Param (
+        [Parameter(Mandatory=$false)]
+        [string] $BlockClientOnly,
+
+        [Parameter(Mandatory=$false)]
+        [string] $BlockClientAndServer
+ )
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 Write-Host '*** AVD AIB CUSTOMIZER PHASE: Screen capture protection ***'
 
 $screenCaptureRegistryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
-$screenCaptureRegistryName = "fEnableScreenCaptureProtection"
-$screenCaptureRegistryValue = "1"
+$screenCaptureRegistryName = "fEnableScreenCaptureProtect"
+
+# Default value is 1 in case no input is provided.
+$screenCaptureRegistryValue = "1" 
+
+if($BlockClientOnly) {
+    $screenCaptureRegistryValue = "1"  
+} 
+elseif($BlockClientAndServer) {
+    $screenCaptureRegistryValue = "2"  
+}
 
 IF(!(Test-Path $screenCaptureRegistryPath)) {
     New-Item -Path $screenCaptureRegistryPath -Force | Out-Null

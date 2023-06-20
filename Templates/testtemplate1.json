@@ -1,94 +1,146 @@
 {
-"type": "Microsoft.VirtualMachineImages/imageTemplates",
-"apiVersion": "2020-02-14",
-"location": "westus2",
-"dependsOn": [],
-"tags": {
-    "forAvd2": "true",
-    "imagebuilderTemplate": "AzureImageBuilderSIG",
-    "userIdentity": "enabled"
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "imageTemplates_W11_22H2_TL_name": {
+            "defaultValue": "W11-22H2-TL",
+            "type": "String"
         },
-    "identity": {
-        "type": "UserAssigned",
-                "userAssignedIdentities": {
-                "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourcegroups/akas-aib/providers/Microsoft.ManagedIdentity/userAssignedIdentities/akas-aibIdentity01": {}
-
-            }
-            },
-
-"properties": {
-    "buildTimeoutInMinutes" : 800,
-    "osDiskSizeGB": 127
-},
-
-    "source": {
-        "type": "PlatformImage",
-            "publisher": "MicrosoftWindowsDesktop",
-            "offer": "windows-11",
-            "sku": "win11-21h2-ent",
-            "version": "latest"
-    },
-    "customize": [
-        {
-            "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
-            "name": "avdBuiltInScript_installLanguagePacks",
-            "sha256Checksum": "dd222a14ba4c2e70fadea13e0d03ea7acb45dc1e05ea2aa143e16a2562ee6948",
-            "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/InstallLanguagePacks.ps1",
-            "type": "File"
-        },
-        {
-            "inline": [
-                "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"English (United Kingdom)\",\"English (Australia)\",\"French (France)\""
-            ],
-            "name": "avdBuiltInScript_installLanguagePacks-parameter",
-            "runAsSystem": true,
-            "runElevated": true,
-            "type": "PowerShell"
-        },
-        {
-            "type": "WindowsRestart",
-            "restartCommand": "shutdown /r /f /t 0",
-            "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM  > c:\\buildArtifacts\\azureImageBuilderRestart.txt",
-            "restartTimeout": "10m"
-        },
-        {
-            "destination": "C:\\AVDImage\\setDefaultLanguage.ps1",
-            "name": "avdBuiltInScript_setDefaultLanguage",
-            "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
-            "type": "File"
-        },
-        {
-            "inline": [
-                "C:\\AVDImage\\setDefaultLanguage.ps1 -Language \"English (Australia)\" -TimeZoneID \"W. Europe Standard Time\""
-            ],
-            "name": "avdBuiltInScript_setDefaultLanguage-parameter",
-            "runAsSystem": true,
-            "runElevated": true,
-            "type": "PowerShell"
-        },
-        {
-            "type": "WindowsRestart",
-            "restartCommand": "shutdown /r /f /t 0",
-            "restartCheckCommand": "echo Azure-Image-Builder-Restarted-the-VM  > c:\\buildArtifacts\\azureImageBuilderRestart.txt",
-            "restartTimeout": "5m"
-        },
-        {
-            "name": "avdBuiltInScript_adminSysPrep",
-            "runAsSystem": true,
-            "runElevated": true,
-            "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-04-19/AdminSysPrep.ps1",
-            "sha256Checksum": "caf1c9055948e194f43dfe2aff80e4b882afa10b521f29a36d222dfaa57d4a5b",
-            "type": "PowerShell"
+        "galleries_citimagegallery_externalid": {
+            "defaultValue": "/subscriptions/88ab3bb6-7799-4506-a9c7-02371189f71c/resourceGroups/rg_we_avdcustomimagetemplate/providers/microsoft.compute/galleries/citimagegallery",
+            "type": "String"
         }
-    ],
-    "distribute": 
-    [
+    },
+    "variables": {},
+    "resources": [
         {
-            "artifactTags": {},
-            "imageId": "/subscriptions/292d7caa-a878-4de8-b774-689097666272/resourceGroups/akas-aib/providers/Microsoft.Compute/images/AkashTimezone1",
-            "location": "westus2",
-            "runOutputName": "TimezoneCust",
-            "type": "ManagedImage"
+            "type": "Microsoft.VirtualMachineImages/imageTemplates",
+            "apiVersion": "2022-02-14",
+            "name": "[parameters('imageTemplates_W11_22H2_TL_name')]",
+            "location": "westeurope",
+            "tags": {
+                "AVD_IMAGE_TEMPLATE": "AVD_IMAGE_TEMPLATE"
+            },
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "/subscriptions/88ab3bb6-7799-4506-a9c7-02371189f71c/resourcegroups/RG_WE_AVDCustomImageTemplate/providers/Microsoft.ManagedIdentity/userAssignedIdentities/DesktopVirtualizationCustomImageTemplateIdentity": {}
+                }
+            },
+            "properties": {
+                "source": {
+                    "offer": "office-365",
+                    "publisher": "microsoftwindowsdesktop",
+                    "sku": "win11-22h2-avd-m365",
+                    "type": "PlatformImage",
+                    "version": "latest"
+                },
+                "customize": [
+                    {
+                        "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
+                        "name": "avd_script_installLanguagePacks",
+                        "sha256Checksum": "b28d6fa6b7b1249ff2474b310c1ac54b86d2ff40fc1e5969501a6f1ba20c0991",
+                        "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-03-01/InstallLanguagePacks.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"French (France)\",\"Spanish (Spain)\""
+                        ],
+                        "name": "avd_script_installLanguagePacks-parameter",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "name": "avd_script_installLanguagePacks-windowsRestart",
+                        "restartTimeout": "10m",
+                        "type": "WindowsRestart"
+                    },
+                    {
+                        "destination": "C:\\AVDImage\\TeamsOptimization.ps1",
+                        "name": "avd_script_teamsOptimization",
+                        "sha256Checksum": "7829fb78e6367b60a8cc7244ff471bbb9ba2e580647b98a976a1a6979f7f7bd9",
+                        "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-03-01/TeamsOptimization.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\AVDImage\\TeamsOptimization.ps1 -TeamsDownloadLink \"https://statics.teams.cdn.office.net/production-windows-x64/1.5.00.28465/Teams_windows_x64.msi\" -WebRTCInstaller \"https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4YM8L\" -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\""
+                        ],
+                        "name": "avd_script_teamsOptimization-parameter",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "destination": "C:\\AVDImage\\multiMediaRedirection.ps1",
+                        "name": "avd_script_multiMediaRedirection",
+                        "sha256Checksum": "27ca92bb8cbebd1b95bd87475706ea6db72bb1a847419959572c60fecce0d365",
+                        "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-03-01/MultiMediaRedirection.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\AVDImage\\multiMediaRedirection.ps1 -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\" -EnableEdge \"true\" -EnableChrome \"true\""
+                        ],
+                        "name": "avd_script_multiMediaRedirection-parameter",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "destination": "C:\\AVDImage\\windowsOptimization.ps1",
+                        "name": "avd_script_windowsOptimization",
+                        "sha256Checksum": "1934684fecd76f20c083e4e3269948eea5dc9ddff7b2750c41e3e473d45ba441",
+                        "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-03-01/WindowsOptimization.ps1",
+                        "type": "File"
+                    },
+                    {
+                        "inline": [
+                            "C:\\AVDImage\\windowsOptimization.ps1 -Optimizations \"WindowsMediaPlayer\",\"ScheduledTasks\",\"NetworkOptimizations\",\"RemoveLegacyIE\""
+                        ],
+                        "name": "avd_script_windowsOptimization-parameter",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "type": "PowerShell"
+                    },
+                    {
+                        "name": "avd_script_windowsUpdate",
+                        "type": "WindowsUpdate",
+                        "updateLimit": 0
+                    },
+                    {
+                        "name": "avd_script_windowsUpdate-windowsRestart",
+                        "type": "WindowsRestart"
+                    },
+                    {
+                        "name": "avd_script_adminSysPrep",
+                        "runAsSystem": true,
+                        "runElevated": true,
+                        "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-03-01/AdminSysPrep.ps1",
+                        "sha256Checksum": "caf1c9055948e194f43dfe2aff80e4b882afa10b521f29a36d222dfaa57d4a5b",
+                        "type": "PowerShell"
+                    }
+                ],
+                "distribute": [
+                    {
+                        "artifactTags": {},
+                        "excludeFromLatest": true,
+                        "galleryImageId": "[concat(parameters('galleries_citimagegallery_externalid'), '/images/avdwin11imagedefinition/versions/0.0.3')]",
+                        "replicationRegions": [
+                            "westeurope"
+                        ],
+                        "runOutputName": "W11-22H24711",
+                        "type": "SharedImage"
+                    }
+                ],
+                "buildTimeoutInMinutes": 0,
+                "vmProfile": {
+                    "vmSize": "Standard_D2s_v5",
+                    "osDiskSizeGB": 127
+                }
+            }
         }
     ]
 }

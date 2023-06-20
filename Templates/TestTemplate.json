@@ -30,7 +30,7 @@
 "source": {
     "offer": "office-365",
     "publisher": "microsoftwindowsdesktop",
-    "sku": "win10-22h2-avd-m365",
+    "sku": "win11-22h2-avd-m365",
     "type": "PlatformImage",
     "version": "latest"
 },
