@@ -8,10 +8,10 @@
 [CmdletBinding()]
   Param (
         [Parameter(Mandatory=$false)]
-        [string] $BlockClientOnly,
+        [bool] $BlockClientOnly,
 
         [Parameter(Mandatory=$false)]
-        [string] $BlockClientAndServer
+        [bool] $BlockClientAndServer
  )
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -35,6 +35,7 @@ IF(!(Test-Path $screenCaptureRegistryPath)) {
 }
 
 try {
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Screen capture protection - Setting  $screenCaptureRegistryName with value $screenCaptureRegistryValue ***"
     New-ItemProperty -Path $screenCaptureRegistryPath -Name $screenCaptureRegistryName -Value $screenCaptureRegistryValue -PropertyType DWORD -Force | Out-Null
 }
 catch {
