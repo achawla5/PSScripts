@@ -50,40 +50,10 @@
                 "type": "PlatformImage",
                     "publisher": "MicrosoftWindowsDesktop",
                     "offer": "windows-10",
-                    "sku": "20h1-ent",
+                    "sku": "win10-22h2-ent-g2",
                     "version": "latest"
             },
-            "customize": [
-                    {
-                        "destination": "C:\\AVD\\TeamsOptimization.ps1",
-                        "name": "TeamsOptimization",
-                        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/TeamsOptimization.ps1",
-                        "type": "File"
-                    },
-                    {
-                        "inline": [
-                            "C:\\AVD\\TeamsOptimization.ps1 -TeamsDownloadLink \"https://teams.microsoft.com/downloads/desktopurl?env=production&plat=windows&arch=x64&managedInstaller=true&download=true\" -VCRedistributableLink \"https://aka.ms/vs/17/release/vc_redist.x64.exe\" -WebRTCInstaller \"https://aka.ms/msrdcwebrtcsvc/msi\""
-                        ],
-                        "name": "TeamsOptimizationPowershell",
-                        "runAsSystem": true,
-                        "runElevated": true,
-                        "type": "PowerShell"
-                    },
-                    {
-                        "type": "PowerShell",
-                        "runElevated": true,
-                        "runAsSystem": true,
-                        "name": "DeprovisioningScript",
-                        "scriptUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/DisableWindowsModuleInstaller.ps1"
-                    },
-                    {
-                        "name": "",
-                        "restartCheckCommand": "",
-                        "restartCommand": "",
-                        "restartTimeout": "5m",
-                        "type": "WindowsRestart"
-                    }
-            ],
+        
             "distribute": 
             [
                 {   

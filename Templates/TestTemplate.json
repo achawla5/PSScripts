@@ -28,11 +28,11 @@
 },
 
 "source": {
-    "offer": "office-365",
+    "offer": "windows-10",
     "publisher": "microsoftwindowsdesktop",
-    "sku": "win11-22h2-avd-m365",
+    "sku": "win10-22h2-ent-g2",
     "type": "PlatformImage",
-    "version": "latest"
+    "version": "19045.3086.230609"
 },
 "customize": [
     {
@@ -72,7 +72,7 @@
     },
     {
         "name": "setDefaultLanguage-windowsRestart",
-        "restartTimeout": "10m",
+        "restartTimeout": "5m",
         "type": "WindowsRestart"
     },
     {
@@ -86,9 +86,9 @@
 "distribute": [
     {
         "artifactTags": {},
-        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/LPIncTimeout",
+        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/LPWin105m",
         "location": "eastus",
-        "runOutputName": "LPTime",
+        "runOutputName": "LPTime5",
         "type": "ManagedImage"
     }
 ]
