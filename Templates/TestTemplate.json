@@ -72,7 +72,7 @@
     },
     {
         "name": "setDefaultLanguage-windowsRestart",
-        "restartTimeout": "5m",
+        "restartTimeout": "10m",
         "type": "WindowsRestart"
     },
     {
@@ -86,9 +86,9 @@
 "distribute": [
     {
         "artifactTags": {},
-        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/LPWin105m",
+        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/LPWin1010m",
         "location": "eastus",
-        "runOutputName": "LPTime5",
+        "runOutputName": "LPTime10",
         "type": "ManagedImage"
     }
 ]
