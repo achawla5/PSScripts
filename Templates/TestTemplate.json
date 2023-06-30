@@ -51,6 +51,11 @@
         "type": "PowerShell"
     },
     {
+        "name": "installLanguagePacks-windowsRestart",
+        "restartTimeout": "10m",
+        "type": "WindowsRestart"
+    },
+    {
         "destination": "C:\\AVDImage\\setDefaultLanguage.ps1",
         "name": "setDefaultLanguage1",
         "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-05-16/SetDefaultLang.ps1",
@@ -67,7 +72,7 @@
     },
     {
         "name": "setDefaultLanguage-windowsRestart",
-        "restartTimeout": "5m",
+        "restartTimeout": "30m",
         "type": "WindowsRestart"
     },
     {
@@ -81,9 +86,9 @@
 "distribute": [
     {
         "artifactTags": {},
-        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/LPDeflang",
+        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/aclptimem",
         "location": "eastus",
-        "runOutputName": "LPTime10",
+        "runOutputName": "LPTime",
         "type": "ManagedImage"
     }
 ]
