@@ -36,26 +36,6 @@
 },
 "customize": [
     {
-        "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
-        "name": "installLanguagePacks1",
-        "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-05-16/InstallLanguagePacks.ps1",
-        "type": "File"
-    },
-    {
-        "inline": [
-            "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"French (France)\""
-        ],
-        "name": "installLanguagePacks-parameter",
-        "runAsSystem": true,
-        "runElevated": true,
-        "type": "PowerShell"
-    },
-    {
-        "name": "installLanguagePacks-windowsRestart",
-        "restartTimeout": "10m",
-        "type": "WindowsRestart"
-    },
-    {
         "destination": "C:\\AVDImage\\setDefaultLanguage.ps1",
         "name": "setDefaultLanguage1",
         "sourceUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/CustomImageTemplateScripts/CustomImageTemplateScripts_2023-05-16/SetDefaultLang.ps1",
@@ -86,7 +66,7 @@
 "distribute": [
     {
         "artifactTags": {},
-        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/LPWin1010m",
+        "imageId": "/subscriptions/dbedef25-184c-430f-b383-0eeb87c3205d/resourceGroups/1TomTest1/providers/Microsoft.Compute/images/DefLang10",
         "location": "eastus",
         "runOutputName": "LPTime10",
         "type": "ManagedImage"
