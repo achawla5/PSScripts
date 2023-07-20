@@ -108,8 +108,6 @@ for($i = 0; $i -le $images.Count; $i++) {
                 Write-Host "SKU: $sku"
                 Write-Host "Offer: $offer"
                 Write-Host "Version: $version"
-
-                Update-AzWvdSessionHostConfiguration -SubscriptionId $subID -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -DiskInfoType $disks[$k] -VMSizeId $VMSizes[$j] -DomainInfoJoinType 'AzureActiveDirectory' -ImageInfoType 'Custom' -CustomInfoResourceId "/subscriptions/0325dd32-ebf8-403e-86b0-365c7d3306d9/resourceGroups/HPMBugBashRG/providers/Microsoft.Compute/galleries/HPMSharedImages/images/VMImageDef1/versions/1.0.0"
                 Update-AzWvdSessionHostConfiguration -SubscriptionId $subID -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -DiskInfoType $disks[$k] -VMSizeId $VMSizes[$j] -DomainInfoJoinType 'AzureActiveDirectory' -ImageInfoType 'Marketplace' -MarketplaceInfoExactVersion $version -MarketplaceInfoOffer $offer -MarketplaceInfoPublisher $publisher -MarketplaceInfoSku $sku
                 Update-AzWvdSessionHostManagement -HostPoolName $HostPoolName -ResourceGroupName $ResourceGroupName -SubscriptionId $SubID -UpdateLogOffDelayMinute "1" -UpdateLogOffMessage "logoff" -UpdateMaxVmsRemoved $vmRemove
 
