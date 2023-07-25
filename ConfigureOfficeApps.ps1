@@ -215,6 +215,7 @@ function installOfficeUsingODT($Applications, $Version, $Type) {
         $guid = [guid]::NewGuid().Guid
         $tempFolder = (Join-Path -Path "C:\temp\" -ChildPath $guid)
         $ODTDownloadUrl = 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=49117'
+        $templateFilePathFolder = "C:\AVDImage"
 
         if (!(Test-Path -Path $tempFolder)) {
             New-Item -Path $tempFolder -ItemType Directory
