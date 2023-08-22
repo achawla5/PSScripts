@@ -90,7 +90,7 @@
 "distribute": [
     {
         "artifactTags": {},
-        "imageId": "/subscriptions/b0dbcd15-5a27-4bfa-8011-a36b9539edb3/resourceGroups/HPUTestingRG/providers/Microsoft.Compute/images/AkashLanguageImage1",
+        "imageId": "/subscriptions/b0dbcd15-5a27-4bfa-8011-a36b9539edb3/resourceGroups/HPUTestingRG/providers/Microsoft.Compute/images/AkashLangSleep",
         "location": "eastus",
         "runOutputName": "LPDef",
         "type": "ManagedImage"
