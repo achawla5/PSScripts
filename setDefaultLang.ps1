@@ -129,11 +129,6 @@ Copy-UserInternationalSettingsToSystem -WelcomeScreen $True -NewUser $True
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
 
-Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Starting to sleep ***"
-Start-Sleep -Seconds 
-Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Ending sleep ***"
-
-
 $stopwatch.Stop()
 $elapsedTime = $stopwatch.Elapsed
 Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exit Code: $LASTEXITCODE ***"
