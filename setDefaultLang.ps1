@@ -139,7 +139,7 @@ try {
      Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Language pack for $LanguageTag is installed already***"
   }
 
-  Install-Language -Language $LanguageTag -CopyToSettings 
+  #Install-Language -Language $LanguageTag -CopyToSettings 
   Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
