@@ -76,7 +76,7 @@
         "name": "avdBuiltInScript_setDefaultLanguage-windowsRestart",
         "restartCheckCommand": "",
         "restartCommand": "",
-        "restartTimeout": "5m",
+        "restartTimeout": "10m",
         "type": "WindowsRestart"
     },
     {
