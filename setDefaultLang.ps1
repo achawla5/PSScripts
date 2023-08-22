@@ -104,7 +104,6 @@ try {
     $GeoID = $languageDetails[1]
   }
   
-  Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
   Set-WinUILanguageOverride -Language $LanguageTag
@@ -124,6 +123,8 @@ catch {
 if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
     Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
 }
+
+Copy-UserInternationalSettingsToSystem -WelcomeScreen $True -NewUser $True
 
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
