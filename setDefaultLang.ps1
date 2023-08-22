@@ -104,6 +104,7 @@ try {
     $GeoID = $languageDetails[1]
   }
   
+  Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
   Set-WinUILanguageOverride -Language $LanguageTag
@@ -126,6 +127,11 @@ if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
 
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
+
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Starting to sleep ***"
+Start-Sleep -Seconds 
+Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Ending sleep ***"
+
 
 $stopwatch.Stop()
 $elapsedTime = $stopwatch.Elapsed
