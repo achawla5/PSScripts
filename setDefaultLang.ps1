@@ -104,7 +104,6 @@ try {
     $GeoID = $languageDetails[1]
   }
   
-  Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
   Set-WinUILanguageOverride -Language $LanguageTag
