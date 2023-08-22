@@ -91,6 +91,9 @@ $LanguagesDictionary.Add("Ukrainian (Ukraine)",	"uk-UA")
 $LanguagesDictionary.Add("English (Australia)",	"en-AU")
 
 try {
+  
+  Disable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
+  Disable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
 
   $languageDetails = Get-RegionInfo -Name $Language
 
@@ -160,6 +163,9 @@ catch {
 if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
     Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
 }
+
+Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
+Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
 
 $stopwatch.Stop()
 $elapsedTime = $stopwatch.Elapsed

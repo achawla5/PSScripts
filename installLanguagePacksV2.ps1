@@ -72,6 +72,9 @@ function Install-LanguagePack {
          $LanguagesDictionary.Add("Turkish (Turkey)",	"tr-TR")
          $LanguagesDictionary.Add("Ukrainian (Ukraine)",	"uk-UA")
          $LanguagesDictionary.Add("English (Australia)",	"en-AU")
+
+         Disable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
+         Disable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
     } # Begin
     PROCESS {
 
@@ -101,6 +104,8 @@ function Install-LanguagePack {
             Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
         }
 
+        Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
+        Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
         $stopwatch.Stop()
         $elapsedTime = $stopwatch.Elapsed
         Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs -  Exit Code: $LASTEXITCODE ***"    
