@@ -73,6 +73,8 @@ function Install-LanguagePack {
          $LanguagesDictionary.Add("Ukrainian (Ukraine)",	"uk-UA")
          $LanguagesDictionary.Add("English (Australia)",	"en-AU")
 
+         # Disable LanguageComponentsInstaller while installing language packs
+         # See Bug 45044965: Installing language pack fails with error: ERROR_SHARING_VIOLATION for more details
          Disable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
          Disable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
     } # Begin
@@ -104,6 +106,7 @@ function Install-LanguagePack {
             Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
         }
 
+        # Enable LanguageComponentsInstaller after language packs are installed
         Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
         Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
         $stopwatch.Stop()
