@@ -58,6 +58,12 @@
         "type": "WindowsRestart"
     },
     {
+        "name": "avdBuiltInScript_windowsUpdate",
+        "searchCriteria": "",
+        "type": "WindowsUpdate",
+        "updateLimit": 0
+    },
+    {
         "destination": "C:\\AVDImage\\setDefaultLanguage.ps1",
         "name": "avdBuiltInScript_setDefaultLanguage",
         "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
