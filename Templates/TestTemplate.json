@@ -36,40 +36,6 @@
 },
 "customize": [
     {
-        "destination": "C:\\AVDImage\\installLanguagePacks.ps1",
-        "name": "avdBuiltInScript_installLanguagePacks",
-        "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/installLanguagePacksV2.ps1",
-        "type": "File"
-    },
-    {
-        "inline": [
-            "C:\\AVDImage\\installLanguagePacks.ps1 -LanguageList \"French (France)\""
-        ],
-        "name": "avdBuiltInScript_installLanguagePacks-parameter",
-        "runAsSystem": true,
-        "runElevated": true,
-        "type": "PowerShell"
-    },
-    {
-        "name": "avdBuiltInScript_installLanguagePacks-windowsRestart",
-        "restartCheckCommand": "",
-        "restartCommand": "",
-        "restartTimeout": "10m",
-        "type": "WindowsRestart"
-    },
-    {
-        "name": "avdBuiltInScript_windowsUpdate",
-        "searchCriteria": "",
-        "type": "WindowsUpdate",
-        "updateLimit": 0
-    },
-    {
-        "name": "avdBuiltInScript_windowsUpdate",
-        "searchCriteria": "",
-        "type": "WindowsUpdate",
-        "updateLimit": 0
-    },
-    {
         "destination": "C:\\AVDImage\\setDefaultLanguage.ps1",
         "name": "avdBuiltInScript_setDefaultLanguage",
         "sourceUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/setDefaultLang.ps1",
@@ -83,6 +49,12 @@
         "runAsSystem": true,
         "runElevated": true,
         "type": "PowerShell"
+    },
+    {
+        "name": "avdBuiltInScript_windowsUpdate",
+        "searchCriteria": "",
+        "type": "WindowsUpdate",
+        "updateLimit": 0
     },
     {
         "name": "avdBuiltInScript_setDefaultLanguage-windowsRestart",
@@ -102,7 +74,7 @@
 "distribute": [
     {
         "artifactTags": {},
-        "imageId": "/subscriptions/b0dbcd15-5a27-4bfa-8011-a36b9539edb3/resourceGroups/HPUTestingRG/providers/Microsoft.Compute/images/AkashLPUp",
+        "imageId": "/subscriptions/b0dbcd15-5a27-4bfa-8011-a36b9539edb3/resourceGroups/HPUTestingRG/providers/Microsoft.Compute/images/AkashLPSetDefUp",
         "location": "eastus",
         "runOutputName": "LPDef",
         "type": "ManagedImage"
