@@ -87,14 +87,14 @@ function Install-LanguagePack {
                  try {
                     Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs -  Attempt: $i ***"   
                     $LanguageCode =  $LanguagesDictionary.$Language
-                    Install-Language -Language $LanguageCode
+                    Install-Language -Language $LanguageCode -ErrorAction Stop
                     Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs -  Installed language $LanguageCode ***"   
                     break
                 }
                 catch {
-                        Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs - Exception occurred***"
-                        Write-Host $PSItem.Exception
-                        continue
+                    Write-Host "*** AVD AIB CUSTOMIZER PHASE : Install language packs - Exception occurred***"
+                    Write-Host $PSItem.Exception
+                    continue
                 }
             }
         }

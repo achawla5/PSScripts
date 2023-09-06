@@ -130,7 +130,7 @@ try {
     for($i=1; $i -le 5; $i++) {
         try {
             Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Attempt: $i ***"   
-            Install-Language -Language $LanguageTag
+            Install-Language -Language $LanguageTag -ErrorAction Stop
             Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default lanhguage - Install language packs -  Installed language $LanguageCode ***"   
             break
         }
@@ -144,13 +144,23 @@ try {
   else {
      Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Language pack for $LanguageTag is installed already***"
   }
-
-  Install-Language -Language $LanguageTag -CopyToSettings 
+  
   Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
   Set-WinUILanguageOverride -Language $LanguageTag
-  Set-WinUserLanguageList -LanguageList $LanguageTag -Force
+  
+  # Enable language Keyboard for Windows.
+  $userLanguageList = New-WinUserLanguageList -Language $languageCode
+  $installedUserLanguagesList = Get-WinUserLanguageList
+
+  foreach($language in $installedUserLanguagesList)
+  {
+       $userLanguageList.Add($language.LanguageTag)
+  }
+
+  Set-WinUserLanguageList -LanguageList $userLanguageList -Force
+
   Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
   if($null -ne $GeoID) {
