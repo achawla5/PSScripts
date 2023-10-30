@@ -502,17 +502,16 @@ PROCESS {
     {
         Write-Host "AVD AIB Customization : Windows Optimizations - Remove OneDrive Commercial"
         $OneDrivePath = @('C:\Windows\System32\OneDriveSetup.exe', 'C:\Windows\SysWOW64\OneDriveSetup.exe')   
-        $OneDrivePath | foreach {
+        $OneDrivePath | ForEach-Object {
             If (Test-Path $_)
             {
-                Write-Host "AVD AIB Customization : Windows Optimizations - `tAttempting to uninstall $_"
-                Write-Host "AVD AIB Customization : Windows Optimizations - Commercial $_"
+                Write-Host "`tAttempting to uninstall $_"
                 Start-Process $_ -ArgumentList "/uninstall" -Wait
             }
         }
+        
         Write-Host "AVD AIB Customization : Windows Optimizations - Removing shortcut links for OneDrive"
-        Remove-Item -Path 'C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk' -Force -ErrorAction SilentlyContinue
-        Remove-Item -Path 'C:\Windows\ServiceProfiles\NetworkService\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk'  -Force -ErrorAction SilentlyContinue
+        Get-ChildItem 'C:\*' -Recurse -Force -EA SilentlyContinue -Include 'OneDrive','OneDrive.*' | Remove-Item -Force -Recurse -EA SilentlyContinue
     }
 
     #endregion
