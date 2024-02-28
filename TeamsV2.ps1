@@ -78,15 +78,13 @@
                 Invoke-WebRequest -Uri $TeamMsixPackageUrl -OutFile $msixPackagePath
 
                 $process = Start-Process -FilePath $teamsBootStrapperPath -ArgumentList "-p", "-o", $msixPackagePath -Wait -NoNewWindow
-                $exitCode = $process.ExitCode
 
-                $EdgeWebView = Join-Path -Path $LocalPath -ChildPath 'WebView'
+                # https://learn.microsoft.com/en-us/microsoftteams/new-teams-troubleshooting-installation#windows-10-users-can-receive-an-error-message
+                $EdgeWebView = Join-Path -Path $LocalPath -ChildPath 'WebView.exe'
                 $webviewUrl = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
                 Invoke-WebRequest -Uri $webviewUrl -OutFile $EdgeWebView
 
-                $process = Start-Process -FilePath $EdgeWebView -Wait -NoNewWindow -WindowStyle Hidden
-
-                Write-Host "Exit Code: $exitCode"
+                $process = Start-Process -FilePath $EdgeWebView -Wait -NoNewWindow
                 Write-host "AVD AIB Customization: Teams Optimization - Finished installation of Teams"
             }
             catch {
