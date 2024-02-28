@@ -80,6 +80,12 @@
                 $process = Start-Process -FilePath $teamsBootStrapperPath -ArgumentList "-p", "-o", $msixPackagePath -Wait -NoNewWindow
                 $exitCode = $process.ExitCode
 
+                $EdgeWebView = Join-Path -Path $LocalPath -ChildPath 'WebView'
+                $webviewUrl = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+                Invoke-WebRequest -Uri $webviewUrl -OutFile $EdgeWebView
+
+                $process = Start-Process -FilePath $EdgeWebView -Wait -NoNewWindow -WindowStyle Hidden
+
                 Write-Host "Exit Code: $exitCode"
                 Write-host "AVD AIB Customization: Teams Optimization - Finished installation of Teams"
             }
