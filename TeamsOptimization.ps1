@@ -13,16 +13,14 @@
         [Parameter()]
         [string]$TeamsDownloadLink,
 
-        [Parameter(
-        )]
-        [string]$VCRedistributableLink = "https://aka.ms/vs/17/release/vc_redist.x64.exe",
+        [Parameter(Mandatory)]
+        [string]$VCRedistributableLink,
 
-        [Parameter(
-        )]
-        [string]$WebRTCInstaller = "https://aka.ms/msrdcwebrtcsvc/msi",
+        [Parameter(Mandatory)]
+        [string]$WebRTCInstaller,
 
         [Parameter()]
-        [string]$TeamsBootStrapperUrl = "https://aka.ms/msrdcwebrtcsvc/msi"
+        [string]$TeamsBootStrapperUrl
 )
  
  function InstallTeamsOptimizationforAVD($TeamsDownloadLink, $VCRedistributableLink, $WebRTCInstaller, $TeamsBootStrapperUrl) {
@@ -73,6 +71,11 @@
                 # Install Teams
                 if (-not [string]::IsNullOrWhiteSpace($TeamsBootStrapperUrl)) {
                     Write-host "AVD AIB Customization: Teams Optimization - Requested to install Teams 2.0"
+
+                    # Allow side-loading for trusted apps
+                    New-Item -Path "HKLM:\Software\Policies\Microsoft\Windows" -Name "Appx" -Force -ErrorAction Ignore
+                    New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\Windows\Appx" -Name "AllowAllTrustedApps" -Value 1 -force
+                    New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\Windows\Appx" -Name "AllowDevelopmentWithoutDevLicense" -Value 1 -force
 
                     # https://learn.microsoft.com/en-us/microsoftteams/new-teams-troubleshooting-installation#windows-10-users-can-receive-an-error-message
                     Write-host "AVD AIB Customization: Teams Optimization - Starting to install WebView2"
