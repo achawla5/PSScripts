@@ -10,26 +10,36 @@
 
 [CmdletBinding()]
   Param (
-        [Parameter(Mandatory)]
+        [Parameter()]
         [string]$TeamsDownloadLink,
 
         [Parameter(
-            Mandatory
         )]
-        [string]$VCRedistributableLink,
+        [string]$VCRedistributableLink = "https://aka.ms/vs/17/release/vc_redist.x64.exe",
 
         [Parameter(
-            Mandatory
         )]
-        [string]$WebRTCInstaller
+        [string]$WebRTCInstaller = "https://aka.ms/msrdcwebrtcsvc/msi",
+
+        [Parameter()]
+        [string]$TeamsBootStrapperUrl = "https://aka.ms/msrdcwebrtcsvc/msi"
 )
  
- function InstallTeamsOptimizationforAVD($TeamsDownloadLink, $VCRedistributableLink, $WebRTCInstaller) {
+ function InstallTeamsOptimizationforAVD($TeamsDownloadLink, $VCRedistributableLink, $WebRTCInstaller, $TeamsBootStrapperUrl) {
    
         Begin {
             $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
             $templateFilePathFolder = "C:\AVDImage"
             Write-host "Starting AVD AIB Customization: Teams Optimization : $((Get-Date).ToUniversalTime()) "
+
+            $guid = [guid]::NewGuid().Guid
+            $tempFolder = (Join-Path -Path "C:\temp\" -ChildPath $guid)
+
+            if (!(Test-Path -Path $tempFolder)) {
+                New-Item -Path $tempFolder -ItemType Directory
+            }
+    
+            Write-Host "AVD AIB Customization: Teams Optimization: Created temp folder $tempFolder"
         }
 
         Process {
@@ -45,10 +55,8 @@
                 # Install the latest version of the Microsoft Visual C++ Redistributable
                 Write-host "AVD AIB Customization: Teams Optimization - Starting the installation of latest Microsoft Visual C++ Redistributable"
                 $appName = 'teams'
-                $drive = 'C:\'
-                New-Item -Path $drive -Name $appName  -ItemType Directory -ErrorAction SilentlyContinue
-                $LocalPath = $drive + '\' + $appName 
-                Set-Location $LocalPath
+                New-Item -Path $tempFolder -Name $appName  -ItemType Directory -ErrorAction SilentlyContinue
+                $LocalPath = $tempFolder + '\' + $appName 
                 $VCRedistExe = 'vc_redist.x64.exe'
                 $outputPath = $LocalPath + '\' + $VCRedistExe
                 Invoke-WebRequest -Uri $VCRedistributableLink -OutFile $outputPath
@@ -62,12 +70,43 @@
                 Start-Process -FilePath msiexec.exe -Args "/I $outputPath /quiet /norestart /log webSocket.log" -Wait
                 Write-host "AVD AIB Customization: Teams Optimization - Finished the installation of the Teams WebSocket Service"
 
-                #Install Teams
-                $teamsMsi = 'teams.msi'
-                $outputPath = $LocalPath + '\' + $teamsMsi
-                Invoke-WebRequest -Uri $TeamsDownloadLink -OutFile $outputPath
-                Start-Process -FilePath msiexec.exe -Args "/I $outputPath /quiet /norestart /log teams.log ALLUSER=1 ALLUSERS=1" -Wait
-                Write-host "AVD AIB Customization: Teams Optimization - Finished installation of Teams"
+                # Install Teams
+                if (-not [string]::IsNullOrWhiteSpace($TeamsBootStrapperUrl)) {
+                    Write-host "AVD AIB Customization: Teams Optimization - Requested to install Teams 2.0"
+
+                    # https://learn.microsoft.com/en-us/microsoftteams/new-teams-troubleshooting-installation#windows-10-users-can-receive-an-error-message
+                    Write-host "AVD AIB Customization: Teams Optimization - Starting to install WebView2"
+                    $EdgeWebView = Join-Path -Path $LocalPath -ChildPath 'WebView.exe'
+                    $webviewUrl = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+                    Invoke-WebRequest -Uri $webviewUrl -OutFile $EdgeWebView
+                    Start-Process -FilePath $EdgeWebView -NoNewWindow -Wait -ArgumentList "/silent /install"
+
+                    Write-host "AVD AIB Customization: Teams Optimization - Finished the installation of Edge WebView2"
+
+                    Write-host "AVD AIB Customization: Teams Optimization - Using teams bootstrapper to install Teams 2.0"
+                    $teamsBootStrapperPath = Join-Path -Path $LocalPath -ChildPath 'teamsbootstrapper.exe'
+                    Invoke-WebRequest -Uri $TeamsBootStrapperUrl -OutFile $teamsBootStrapperPath
+                    Start-Process -FilePath $teamsBootStrapperPath -Wait -ArgumentList "-p" -NoNewWindow 
+
+                    Write-host "AVD AIB Customization: Teams Optimization - Finished installation of Teams"
+
+                    $provisionedPackages = Get-AppxProvisionedPackage -Online
+                    $isTeamsInstalled = $provisionedPackages | Where-Object { $_.PackageName -like '*MSTeams*8wekyb3d8bbwe' }
+
+                    if ($isTeamsInstalled) {
+                        Write-Host "AVD AIB Customization: Teams Optimization - Get-AppxProvisionedPackage returned MSTeams."
+                    } else {
+                        Write-Host "AVD AIB Customization: Teams Optimization - Get-AppxProvisionedPackage did not return MSTeams."
+                    }
+                } 
+                else {
+                    Write-host "AVD AIB Customization: Teams Optimization - Requested to install Teams 1.0"
+                    $teamsMsi = 'teams.msi'
+                    $outputPath = $LocalPath + '\' + $teamsMsi
+                    Invoke-WebRequest -Uri $TeamsDownloadLink -OutFile $outputPath
+                    Start-Process -FilePath msiexec.exe -Args "/I $outputPath /quiet /norestart /log teams.log ALLUSER=1 ALLUSERS=1" -Wait
+                    Write-host "AVD AIB Customization: Teams Optimization - Finished installation of Teams"
+                }
             }
             catch {
                 Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Teams Optimization  - Exception occured  *** : [$($_.Exception.Message)]"
@@ -81,6 +120,10 @@
                 Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
             }
     
+            if ((Test-Path -Path $tempFolder -ErrorAction SilentlyContinue)) {
+                Remove-Item -Path $tempFolder -Force -Recurse -ErrorAction Continue
+            }
+
             $stopwatch.Stop()
             $elapsedTime = $stopwatch.Elapsed
             Write-Host "*** AVD AIB CUSTOMIZER PHASE : Teams Optimization -  Exit Code: $LASTEXITCODE ***"    
@@ -98,6 +141,6 @@ function Set-RegKey($registryPath, $registryKey, $registryValue) {
     }
  }
 
-InstallTeamsOptimizationforAVD -TeamsDownloadLink $TeamsDownloadLink -VCRedistributableLink $VCRedistributableLink -WebRTCInstaller $WebRTCInstaller
+InstallTeamsOptimizationforAVD -TeamsDownloadLink $TeamsDownloadLink -VCRedistributableLink $VCRedistributableLink -WebRTCInstaller $WebRTCInstaller -TeamsBootStrapperUrl $TeamsBootStrapperUrl
 
  
