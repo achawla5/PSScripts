@@ -20,7 +20,7 @@
         [string]$WebRTCInstaller = "https://aka.ms/msrdcwebrtcsvc/msi",
 
         [Parameter()]
-        [string]$TeamsBootStrapperUrl,
+        [string]$TeamsBootStrapperUrl = "https://go.microsoft.com/fwlink/?linkid=2243204&clcid=0x409",
 
         # This is the x64 MSIX package for the new teams, which will be used majority of the times
         [Parameter()]
