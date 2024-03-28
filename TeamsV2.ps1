@@ -42,7 +42,7 @@ if ((Test-Path "C:\Windows\CloudPC\teamsbootstrapper.exe") -and (Test-Path "C:\W
 {
     write-host 'Finished Downloading teamsbootstrapper.exe file '
     write-host 'Starting teamsbootstrapper.exe file'
-    Start-Process -FilePath teamsbootstrapper.exe -ArgumentList "-p", "-o", $env:SystemRoot\CloudPC\teams.msix -Wait -NoNewWindow
+    Start-Process -FilePath $env:SystemRoot\CloudPC\teamsbootstrapper.exe -ArgumentList "-p", "-o", $env:SystemRoot\CloudPC\teams.msix -Wait -NoNewWindow
 }
 else 
 {
