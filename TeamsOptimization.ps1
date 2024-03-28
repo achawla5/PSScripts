@@ -13,14 +13,18 @@
         [Parameter()]
         [string]$TeamsDownloadLink,
 
-        [Parameter(Mandatory)]
-        [string]$VCRedistributableLink,
-
-        [Parameter(Mandatory)]
-        [string]$WebRTCInstaller,
+        [Parameter()]
+        [string]$VCRedistributableLink = "https://aka.ms/vs/17/release/vc_redist.x86.exe",
 
         [Parameter()]
-        [string]$TeamsBootStrapperUrl
+        [string]$WebRTCInstaller = "https://aka.ms/msrdcwebrtcsvc/msi",
+
+        [Parameter()]
+        [string]$TeamsBootStrapperUrl,
+
+        # This is the x64 MSIX package for the new teams, which will be used majority of the times
+        [Parameter()]
+        [string]$TeamMsixPackageUrl = "https://go.microsoft.com/fwlink/?linkid=2196106"
 )
  
  function InstallTeamsOptimizationforAVD($TeamsDownloadLink, $VCRedistributableLink, $WebRTCInstaller, $TeamsBootStrapperUrl) {
@@ -86,10 +90,13 @@
 
                     Write-host "AVD AIB Customization: Teams Optimization - Finished the installation of Edge WebView2"
 
+                    $msixPackagePath = Join-Path -Path $LocalPath -ChildPath 'teams.msix'
+                    Invoke-WebRequest -Uri $TeamMsixPackageUrl -OutFile $msixPackagePath
+
                     Write-host "AVD AIB Customization: Teams Optimization - Using teams bootstrapper to install Teams 2.0"
                     $teamsBootStrapperPath = Join-Path -Path $LocalPath -ChildPath 'teamsbootstrapper.exe'
                     Invoke-WebRequest -Uri $TeamsBootStrapperUrl -OutFile $teamsBootStrapperPath
-                    Start-Process -FilePath $teamsBootStrapperPath -Wait -ArgumentList "-p" -NoNewWindow 
+                    Start-Process -FilePath $teamsBootStrapperPath -Wait -ArgumentList "-p", "-o", $msixPackagePath -NoNewWindow 
 
                     Write-host "AVD AIB Customization: Teams Optimization - Finished installation of Teams"
 
@@ -144,6 +151,6 @@ function Set-RegKey($registryPath, $registryKey, $registryValue) {
     }
  }
 
-InstallTeamsOptimizationforAVD -TeamsDownloadLink $TeamsDownloadLink -VCRedistributableLink $VCRedistributableLink -WebRTCInstaller $WebRTCInstaller -TeamsBootStrapperUrl $TeamsBootStrapperUrl
+InstallTeamsOptimizationforAVD -TeamsDownloadLink $TeamsDownloadLink -VCRedistributableLink $VCRedistributableLink -WebRTCInstaller $WebRTCInstaller -TeamsBootStrapperUrl $TeamsBootStrapperUrl -TeamsMsixPackageUrl $TeamMsixPackageUrl
 
  
