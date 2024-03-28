@@ -1,121 +1,64 @@
- <#Author       : Akash Chawla
-# Usage        : Teams Optimization
-#>
+write-host 'Customization:  Setting registry key'
+New-Item -Path HKLM:\SOFTWARE\Microsoft -Name "Teams"
+New-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Teams -Name "IsWVDEnvironment" -Type "Dword" -Value "1" -Force
+write-host 'Customization: Finished Set required regKey'
 
-#######################################
-#    Teams Optimization               #
-#######################################
 
-# Reference: https://learn.microsoft.com/en-us/azure/virtual-desktop/teams-on-avd
+if (!(Test-Path "C:\Windows\CloudPC\")) 
+{
+    write-host 'Create CloudPC Folder'
+    New-Item -path C:\Windows\CloudPC\ -ItemType directory
+}
 
-[CmdletBinding()]
-  Param (
-        [Parameter()]
-        [string]$TeamsBootStrapperUrl = "https://go.microsoft.com/fwlink/?linkid=2243204&clcid=0x409",
+# Install Teams
+write-host 'Customization: Install Teams Client'
+set-Location $env:SystemRoot\CloudPC
+write-host 'Downloading teamsbootstrapper.exe file'
+Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2243204&clcid=0x409' -Outfile $env:SystemRoot\CloudPC\teamsbootstrapper.exe -TimeoutSec 1000
+write-host 'Downloading teams.msix file'
+Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2196106' -Outfile $env:SystemRoot\CloudPC\teams.msix -TimeoutSec 1000
 
-        [Parameter()]
-        [string]$VCRedistributableLink = "https://aka.ms/vs/17/release/vc_redist.x64.exe",
-
-        [Parameter()]
-        [string]$WebRTCInstaller = "https://aka.ms/msrdcwebrtcsvc/msi",
-
-        [Parameter()]
-        [string]$TeamMsixPackageUrl = "https://go.microsoft.com/fwlink/?linkid=2196106"
-)
- 
- function InstallTeamsOptimizationforAVD($TeamsBootStrapperUrl, $VCRedistributableLink, $WebRTCInstaller, $TeamsMsixPackageUrl) {
-   
-        Begin {
-            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-            $templateFilePathFolder = "C:\AVDImage"
-            Write-host "Starting AVD AIB Customization: Teams Optimization : $((Get-Date).ToUniversalTime()) "
-
-            $guid = [guid]::NewGuid().Guid
-            $tempFolder = (Join-Path -Path "C:\temp\" -ChildPath $guid)
-
-            if (!(Test-Path -Path $tempFolder)) {
-                New-Item -Path $tempFolder -ItemType Directory
-            }
-    
-            Write-Host "AVD AIB Customization: Teams Optimization: Created temp folder $tempFolder"
-        }
-
-        Process {
-            
-            try {     
-                # Set reg key
-                New-Item -Path HKLM:\SOFTWARE\Microsoft -Name "Teams" 
-                $registryPath = "HKLM:\SOFTWARE\Microsoft\Teams"
-                $registryKey = "IsWVDEnvironment"
-                $registryValue = "1"
-                Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue 
-                
-                # Install the latest version of the Microsoft Visual C++ Redistributable
-                Write-host "AVD AIB Customization: Teams Optimization - Starting the installation of latest Microsoft Visual C++ Redistributable"
-                $appName = 'teams'
-                New-Item -Path $tempFolder -Name $appName  -ItemType Directory -ErrorAction SilentlyContinue
-
-                $LocalPath = $tempFolder + '\' + $appName 
-                Set-Location $LocalPath
-                $VCRedistExe = 'vc_redist.x64.exe'
-                $outputPath = $LocalPath + '\' + $VCRedistExe
-                Invoke-WebRequest -Uri $VCRedistributableLink -OutFile $outputPath
-                Start-Process -FilePath $outputPath -Args "/install /quiet /norestart /log vcdist.log" -Wait
-                Write-host "AVD AIB Customization: Teams Optimization - Finished the installation of latest Microsoft Visual C++ Redistributable"
-
-                # Install the Remote Desktop WebRTC Redirector Service
-                $webRTCMSI = 'webSocketSvc.msi'
-                $outputPath = $LocalPath + '\' + $webRTCMSI
-                Invoke-WebRequest -Uri $WebRTCInstaller -OutFile $outputPath
-                Start-Process -FilePath msiexec.exe -Args "/I $outputPath /quiet /norestart /log webSocket.log" -Wait
-                Write-host "AVD AIB Customization: Teams Optimization - Finished the installation of the Teams WebSocket Service"
-
-                #Install Teams
-                $teamsBootStrapperPath = Join-Path -Path $LocalPath -ChildPath 'teamsbootstrapper.exe'
-                Invoke-WebRequest -Uri $TeamsBootStrapperUrl -OutFile $teamsBootStrapperPath
-
-                $msixPackagePath = Join-Path -Path $LocalPath -ChildPath 'teams.msix'
-                Invoke-WebRequest -Uri $TeamMsixPackageUrl -OutFile $msixPackagePath
-
-                $process = Start-Process -FilePath $teamsBootStrapperPath -ArgumentList "-p", "-o", $msixPackagePath -Wait -NoNewWindow
-
-                # https://learn.microsoft.com/en-us/microsoftteams/new-teams-troubleshooting-installation#windows-10-users-can-receive-an-error-message
-                $EdgeWebView = Join-Path -Path $LocalPath -ChildPath 'WebView.exe'
-                $webviewUrl = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
-                Invoke-WebRequest -Uri $webviewUrl -OutFile $EdgeWebView
-
-                $process = Start-Process -FilePath $EdgeWebView -Wait -NoNewWindow
-                Write-host "AVD AIB Customization: Teams Optimization - Finished installation of Teams"
-            }
-            catch {
-                Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Teams Optimization  - Exception occured  *** : [$($_.Exception.Message)]"
-            }    
-        }
-        
-        End {
-
-            #Cleanup
-            if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
-                Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
-            }
-    
-            $stopwatch.Stop()
-            $elapsedTime = $stopwatch.Elapsed
-            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Teams Optimization -  Exit Code: $LASTEXITCODE ***"    
-            Write-Host "Ending AVD AIB Customization : Teams Optimization - Time taken: $elapsedTime"
-        }
- }
-
-function Set-RegKey($registryPath, $registryKey, $registryValue) {
-    try {
-         Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Teams Optimization  - Setting  $registryKey with value $registryValue ***"
-         New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
+# Install WebView2
+try 
+{
+    $version = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}' -ErrorAction Stop).pv 
+    if (-not $version)
+    {
+        write-host 'Downloading MicrosoftEdgeWebView2Setup.exe file'
+        Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $env:SystemRoot\CloudPC\MicrosoftEdgeWebView2Setup.exe -TimeoutSec 1000
     }
-    catch {
-         Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Teams Optimization  - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
+    else 
+    {
+        write-host "EdgeWebView2 installed with $version"
     }
- }
+}
+catch 
+{
+    write-host 'Downloading MicrosoftEdgeWebView2Setup.exe file'
+    Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $env:SystemRoot\CloudPC\MicrosoftEdgeWebView2Setup.exe -TimeoutSec 1000
+}
 
-InstallTeamsOptimizationforAVD -TeamsBootStrapperUrl $TeamsBootStrapperUrl -VCRedistributableLink $VCRedistributableLink -WebRTCInstaller $WebRTCInstaller -TeamsMsixPackageUrl $TeamMsixPackageUrl
+if ((Test-Path "C:\Windows\CloudPC\teamsbootstrapper.exe") -and (Test-Path "C:\Windows\CloudPC\teams.msix"))
+{
+    write-host 'Finished Downloading teamsbootstrapper.exe file '
+    write-host 'Starting teamsbootstrapper.exe file'
+    Start-Process -FilePath teamsbootstrapper.exe -ArgumentList "-p", "-o", $env:SystemRoot\CloudPC\teams.msix -Wait -NoNewWindow
+}
+else 
+{
+    write-host 'Failed Downloading teamsbootstrapper.exe file or teams.msix file'
+}
 
- 
+
+if ((-not $version) -and (Test-Path "C:\Windows\CloudPC\MicrosoftEdgeWebView2Setup.exe"))
+{
+    write-host 'Finished Downloading MicrosoftEdgeWebView2Setup.exe file '
+    write-host 'Starting MicrosoftEdgeWebView2Setup.exe file'
+    Start-Process -FilePath $env:SystemRoot\CloudPC\MicrosoftEdgeWebView2Setup.exe -Wait -NoNewWindow
+}
+else 
+{
+    write-host 'Failed Downloading MicrosoftEdgeWebView2Setup.exe file '
+}
+
+write-host 'Customization: Finished Install Teams Client'
