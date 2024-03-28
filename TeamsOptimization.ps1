@@ -108,6 +108,9 @@
                     } else {
                         Write-Host "AVD AIB Customization: Teams Optimization - Get-AppxProvisionedPackage did not return MSTeams."
                     }
+
+                    $MSTeams_AppxPackage = Get-AppxPackage 'MSTeams' -AllUsers
+                    Write-Host "AVD AIB Customization: Teams Optimization - Status of package is" $MSTeams_AppxPackage.Status
                 } 
                 else {
                     Write-host "AVD AIB Customization: Teams Optimization - Requested to install Teams 1.0"
