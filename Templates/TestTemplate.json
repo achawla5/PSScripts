@@ -5,9 +5,16 @@
             "publisher": "microsoftwindowsdesktop",
             "sku": "win11-23h2-ent",
             "type": "PlatformImage",
-            "version": "latest (22631.3880.240704)"
+            "version": "latest"
         },
         "customize": [
+            {
+                "name": "setregkeywu",
+                "runAsSystem": true,
+                "runElevated": true,
+                "scriptUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/HPMTestScripts/testfile.ps1",
+                "type": "PowerShell"
+            },
             {
                 "name": "avdBuiltInScript_windowsUpdate",
                 "searchCriteria": "IsInstalled=0",
@@ -25,13 +32,6 @@
                 "restartCommand": "",
                 "restartTimeout": "",
                 "type": "WindowsRestart"
-            },
-            {
-                "name": "setregkeywu",
-                "runAsSystem": true,
-                "runElevated": true,
-                "scriptUri": "https://raw.githubusercontent.com/achawla5/PSScripts/main/HPMTestScripts/testfile.ps1",
-                "type": "PowerShell"
             },
             {
                 "name": "adminSysPrep",
