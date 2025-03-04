@@ -9,11 +9,19 @@
 
 [CmdletBinding()]
   Param (
-        [Parameter(Mandatory)]
         [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)", "English (Australia)", "English (United States)")]
-        [string]$Language
+        [string]$Language = "Spanish (Spain)"
 )
 
+function Set-RegKey($registryPath, $registryKey, $registryValue) {
+  try {
+       Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - Setting  $registryKey with value $registryValue ***"
+       New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
+  }
+  catch {
+       Write-Host "*** AVD AIB CUSTOMIZER PHASE ***   Set default Language  - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
+  }
+}
 function Get-RegionInfo($Name='*')
 {
   try {
@@ -165,6 +173,22 @@ try {
 
   if($null -ne $GeoID) {
     Set-WinHomeLocation -GeoID $GeoID
+
+    try {
+      $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
+      $registryKey = "DeviceRegion"
+      $registryValue = $GeoID
+    
+      IF(!(Test-Path $registryPath)) {
+          New-Item -Path $registryPath -Force
+      }
+  
+      Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+    }
+    catch {
+        Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Error occurred: [$($_.Exception.Message)]"
+        Exit 1
+    }
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default region***"
   }
 } 
