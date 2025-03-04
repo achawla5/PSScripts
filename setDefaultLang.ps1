@@ -156,23 +156,29 @@ try {
   Set-systempreferreduilanguage -Language $LanguageTag
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
-  Set-WinUILanguageOverride -Language $LanguageTag
+  Set-WinUILanguageOverride -Language $LanguageTag 
   
   # Enable language Keyboard for Windows.
-  $userLanguageList = New-WinUserLanguageList -Language $LanguageTag
-  $installedUserLanguagesList = Get-WinUserLanguageList
+  $userLanguageList = New-WinUserLanguageList -Language $LanguageTag -ErrorAction Continue
+  $installedUserLanguagesList = Get-WinUserLanguageList -ErrorAction Continue
 
-  foreach($language in $installedUserLanguagesList)
-  {
-       $userLanguageList.Add($language.LanguageTag)
+  try {
+    foreach($language in $installedUserLanguagesList)
+    {
+         $userLanguageList.Add($language.LanguageTag)
+    }
+
+    Set-WinUserLanguageList -LanguageList $userLanguageList -Force
+
   }
-
-  Set-WinUserLanguageList -LanguageList $userLanguageList -Force
+  catch {
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred while adding user language list - ignoring ***"
+  }
 
   Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
   if($null -ne $GeoID) {
-    Set-WinHomeLocation -GeoID $GeoID
+    Set-WinHomeLocation (new-object System.Globalization.RegionInfo($Language.LanguageTag.Split("-")[1])).GeoId
 
     try {
       $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
