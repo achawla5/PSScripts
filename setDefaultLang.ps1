@@ -10,7 +10,7 @@
 [CmdletBinding()]
   Param (
         [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)", "English (Australia)", "English (United States)")]
-        [string]$Language = "Spanish (Spain)"
+        [string]$Language = "French (France)"
 )
 
 function Set-RegKey($registryPath, $registryKey, $registryValue) {
@@ -49,6 +49,42 @@ function Get-RegionInfo($Name='*')
   }
 }
 
+function UpdateUserLanguageList($languageTag)
+{
+    # Enable language Keyboard for Windows.
+    $userLanguageList = New-WinUserLanguageList -Language $languageTag
+    $installedUserLanguagesList = Get-WinUserLanguageList
+
+    foreach($language in $installedUserLanguagesList)
+    {
+        $userLanguageList.Add($language.LanguageTag)
+    }
+
+    Set-WinUserLanguageList -LanguageList $userLanguageList -f
+}
+
+function UpdateRegionSettings($GeoID) 
+{
+  Set-WinHomeLocation -GeoId $GeoID
+
+  try {
+    $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
+    $registryKey = "DeviceRegion"
+    $registryValue = $GeoID
+  
+    IF(!(Test-Path $registryPath)) {
+        New-Item -Path $registryPath -Force
+    }
+
+    Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+  }
+  catch {
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Error occurred: [$($_.Exception.Message)]"
+      Exit 1
+  }
+
+  Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
+}
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 Write-Host "*** Starting AVD AIB CUSTOMIZER PHASE: Set default Language ***"
@@ -139,7 +175,7 @@ try {
         try {
             Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Attempt: $i ***"   
             Install-Language -Language $LanguageTag -ErrorAction Stop
-            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default lanhguage - Install language packs -  Installed language $LanguageCode ***"   
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Installed language $LanguageCode ***"   
             break
         }
         catch {
@@ -153,55 +189,21 @@ try {
      Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Language pack for $LanguageTag is installed already***"
   }
   
-  Set-systempreferreduilanguage -Language $LanguageTag
-  Set-WinSystemLocale -SystemLocale $LanguageTag
-  Set-Culture -CultureInfo $LanguageTag
-  Set-WinUILanguageOverride -Language $LanguageTag 
+    Set-systempreferreduilanguage -Language $LanguageTag
+    Set-Culture -CultureInfo $LanguageTag
   
-  # Enable language Keyboard for Windows.
-  $userLanguageList = New-WinUserLanguageList -Language $LanguageTag -ErrorAction Continue
-  $installedUserLanguagesList = Get-WinUserLanguageList -ErrorAction Continue
+    # Enable language Keyboard for Windows.
+    UpdateUserLanguageList -languageTag $LanguageTag
 
-  try {
-    foreach($language in $installedUserLanguagesList)
-    {
-         $userLanguageList.Add($language.LanguageTag)
-    }
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
-    Set-WinUserLanguageList -LanguageList $userLanguageList -Force
-
-  }
+    $GeoID = (new-object System.Globalization.RegionInfo($languageTag.Split("-")[1])).GeoId
+    UpdateRegionSettings($GeoID)
+  } 
   catch {
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred while adding user language list - ignoring ***"
+      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
+      Write-Host $PSItem.Exception
   }
-
-  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
-
-  if($null -ne $GeoID) {
-    Set-WinHomeLocation (new-object System.Globalization.RegionInfo($Language.LanguageTag.Split("-")[1])).GeoId
-
-    try {
-      $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
-      $registryKey = "DeviceRegion"
-      $registryValue = $GeoID
-    
-      IF(!(Test-Path $registryPath)) {
-          New-Item -Path $registryPath -Force
-      }
-  
-      Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
-    }
-    catch {
-        Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Error occurred: [$($_.Exception.Message)]"
-        Exit 1
-    }
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default region***"
-  }
-} 
-catch {
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
-    Write-Host $PSItem.Exception
-}
 
 if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
     Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
