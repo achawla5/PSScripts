@@ -77,12 +77,23 @@ function UpdateRegionSettings($GeoID)
     }
 
     Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+
+    try {
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key"
+      Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion" -Name "DeviceRegion" -Force
+    }
+    catch 
+    {
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
+    }
   }
   catch {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Error occurred: [$($_.Exception.Message)]"
       Exit 1
   }
 
+  # Set Region in Default User Profile (applies to all new users)
+  New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
   Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
 }
 
