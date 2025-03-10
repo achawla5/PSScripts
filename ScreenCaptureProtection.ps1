@@ -43,6 +43,8 @@ catch {
     Write-Host "Message: [$($_.Exception.Message)"]
 }
 
+Set-WinHomeLocation -GeoId 84
+Set-WinHomeLocation -GeoId 0x54
 
 $stopwatch.Stop()
 $elapsedTime = $stopwatch.Elapsed
