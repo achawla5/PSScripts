@@ -65,7 +65,7 @@ function UpdateUserLanguageList($languageTag)
 
 function UpdateRegionSettings($GeoID) 
 {
-  Set-WinHomeLocation -GeoId $GeoID
+  # Set-WinHomeLocation -GeoId $GeoID
 
   try {
     $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
@@ -91,10 +91,9 @@ function UpdateRegionSettings($GeoID)
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Error occurred: [$($_.Exception.Message)]"
       Exit 1
   }
-
   # Set Region in Default User Profile (applies to all new users)
-  New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
-  Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
+  # New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
+  # Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
 }
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -223,6 +222,19 @@ if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
 # Enable LanguageComponentsInstaller after language packs are installed
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
+
+$registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
+$registryKey = "DeviceRegion"
+
+if (Test-Path $registryPath) {
+  if (Get-ItemProperty -Path $registryPath -Name $registryKey -ErrorAction SilentlyContinue) {
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$regName' exists."
+  } else {
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$regName' does not exist."
+  }
+} else {
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry path does not exist."
+}
 
 $stopwatch.Stop()
 $elapsedTime = $stopwatch.Elapsed
