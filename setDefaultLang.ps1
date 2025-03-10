@@ -228,9 +228,9 @@ $registryKey = "DeviceRegion"
 
 if (Test-Path $registryPath) {
   if (Get-ItemProperty -Path $registryPath -Name $registryKey -ErrorAction SilentlyContinue) {
-      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$regName' exists."
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$registryKey' exists."
   } else {
-      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$regName' does not exist."
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$registryKey' does not exist."
   }
 } else {
     Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry path does not exist."
