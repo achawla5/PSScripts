@@ -68,19 +68,26 @@ function UpdateRegionSettings($GeoID)
   # Set-WinHomeLocation -GeoId $GeoID
 
   try {
-    $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
-    $registryKey = "DeviceRegion"
-    $registryValue = $GeoID
+    # $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
+    # $registryKey = "DeviceRegion"
+    # $registryValue = $GeoID
   
-    IF(!(Test-Path $registryPath)) {
-        New-Item -Path $registryPath -Force
-    }
+    # IF(!(Test-Path $registryPath)) {
+    #     New-Item -Path $registryPath -Force
+    # }
 
-    Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
+    #Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
 
     try {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key"
-      Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion" -Name "DeviceRegion" -Force
+      Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion" -Name "DeviceRegion" -Force -ErrorAction Continue
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Remove DeviceRegion registry key succeeded."
+
+      #Set Region in Default User Profile (applies to all new users)
+      New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
+
+      Set-WinHomeLocation -GeoId $GeoID
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
     }
     catch 
     {
@@ -91,9 +98,6 @@ function UpdateRegionSettings($GeoID)
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Error occurred: [$($_.Exception.Message)]"
       Exit 1
   }
-  # Set Region in Default User Profile (applies to all new users)
-  # New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
-  # Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
 }
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -222,19 +226,6 @@ if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
 # Enable LanguageComponentsInstaller after language packs are installed
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
 Enable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources"
-
-$registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
-$registryKey = "DeviceRegion"
-
-if (Test-Path $registryPath) {
-  if (Get-ItemProperty -Path $registryPath -Name $registryKey -ErrorAction SilentlyContinue) {
-      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$registryKey' exists."
-  } else {
-      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry value '$registryKey' does not exist."
-  }
-} else {
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Registry path does not exist."
-}
 
 $stopwatch.Stop()
 $elapsedTime = $stopwatch.Elapsed
