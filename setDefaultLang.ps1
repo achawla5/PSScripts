@@ -9,19 +9,11 @@
 
 [CmdletBinding()]
   Param (
+        [Parameter(Mandatory)]
         [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)", "English (Australia)", "English (United States)")]
-        [string]$Language = "French (France)"
+        [string]$Language
 )
 
-function Set-RegKey($registryPath, $registryKey, $registryValue) {
-  try {
-       Write-Host "*** AVD AIB CUSTOMIZER PHASE ***  Set default Language - Setting  $registryKey with value $registryValue ***"
-       New-ItemProperty -Path $registryPath -Name $registryKey -Value $registryValue -PropertyType DWORD -Force -ErrorAction Stop
-  }
-  catch {
-       Write-Host "*** AVD AIB CUSTOMIZER PHASE ***   Set default Language  - Cannot add the registry key  $registryKey *** : [$($_.Exception.Message)]"
-  }
-}
 function Get-RegionInfo($Name='*')
 {
   try {
@@ -51,6 +43,7 @@ function Get-RegionInfo($Name='*')
 
 function UpdateUserLanguageList($languageTag)
 {
+  try {
     # Enable language Keyboard for Windows.
     $userLanguageList = New-WinUserLanguageList -Language $languageTag
     $installedUserLanguagesList = Get-WinUserLanguageList
@@ -61,41 +54,34 @@ function UpdateUserLanguageList($languageTag)
     }
 
     Set-WinUserLanguageList -LanguageList $userLanguageList -f
+  }
+  catch 
+  {
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateUserLanguageList: Error occurred: [$($_.Exception.Message)]"
+  }
 }
 
 function UpdateRegionSettings($GeoID) 
 {
-  # Set-WinHomeLocation -GeoId $GeoID
-
   try {
-    # $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion"
-    # $registryKey = "DeviceRegion"
-    # $registryValue = $GeoID
-  
-    # IF(!(Test-Path $registryPath)) {
-    #     New-Item -Path $registryPath -Force
-    # }
-
-    #Set-RegKey -registryPath $registryPath -registryKey $registryKey -registryValue $registryValue
-
     try {
+      # try deleting reg key for deviceRegion for DMA compliance.
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key"
       Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion" -Name "DeviceRegion" -Force -ErrorAction Continue
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Remove DeviceRegion registry key succeeded."
-
-      #Set Region in Default User Profile (applies to all new users)
-      New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
-
-      Set-WinHomeLocation -GeoId $GeoID
-      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
     }
     catch 
     {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
     }
+
+    #Set Region in Default User Profile (applies to all new users)
+    New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
+    Set-WinHomeLocation -GeoId $GeoID
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
   }
   catch {
-      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Error occurred: [$($_.Exception.Message)]"
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateRegionSettings: Error occurred: [$($_.Exception.Message)]"
       Exit 1
   }
 }
@@ -149,8 +135,6 @@ $LanguagesDictionary.Add("Ukrainian (Ukraine)",	"uk-UA")
 $LanguagesDictionary.Add("English (Australia)",	"en-AU")
 
 try {
-
-  
   # Disable LanguageComponentsInstaller while installing language packs
   # See Bug 45044965: Installing language pack fails with error: ERROR_SHARING_VIOLATION for more details
   Disable-ScheduledTask -TaskName "\Microsoft\Windows\LanguageComponentsInstaller\Installation"
@@ -203,21 +187,22 @@ try {
      Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Language pack for $LanguageTag is installed already***"
   }
   
-    Set-systempreferreduilanguage -Language $LanguageTag
-    Set-Culture -CultureInfo $LanguageTag
+  Set-systempreferreduilanguage -Language $LanguageTag
+  Set-WinSystemLocale -SystemLocale $LanguageTag
+  Set-Culture -CultureInfo $LanguageTag
   
-    # Enable language Keyboard for Windows.
-    UpdateUserLanguageList -languageTag $LanguageTag
+  # Enable language Keyboard for Windows.
+  UpdateUserLanguageList -languageTag $LanguageTag
 
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
+  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
-    $GeoID = (new-object System.Globalization.RegionInfo($languageTag.Split("-")[1])).GeoId
-    UpdateRegionSettings($GeoID)
-  } 
-  catch {
-      Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
-      Write-Host $PSItem.Exception
-  }
+  $GeoID = (new-object System.Globalization.RegionInfo($languageTag.Split("-")[1])).GeoId
+  UpdateRegionSettings($GeoID)
+} 
+catch {
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
+    Write-Host $PSItem.Exception
+}
 
 if ((Test-Path -Path $templateFilePathFolder -ErrorAction SilentlyContinue)) {
     Remove-Item -Path $templateFilePathFolder -Force -Recurse -ErrorAction Continue
@@ -236,10 +221,3 @@ Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Time taken: $el
 #############
 #    END    #
 #############
-
-
-
-
-
-
-
