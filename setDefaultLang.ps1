@@ -64,15 +64,15 @@ function UpdateUserLanguageList($languageTag)
 function UpdateRegionSettings($GeoID) 
 {
   try {
-     try {
-       # try deleting reg key for deviceRegion for DMA compliance.
+    try {
+      # try deleting reg key for deviceRegion for DMA compliance.
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key"
       Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion" -Name "DeviceRegion" -Force -ErrorAction Continue
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Remove DeviceRegion registry key succeeded."
     }
     catch 
     {
-       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
+      Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
     }
 
     #Set Region in Default User Profile (applies to all new users)
