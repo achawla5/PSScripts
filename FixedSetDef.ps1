@@ -75,18 +75,56 @@ function UpdateRegionSettings($GeoID)
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
     }
     
-    #Set Region in Default User Profile (applies to all new users)
-    # Ensure the registry path exists before creating the property
-    $regPath = "HKU\.DEFAULT\Control Panel\International\Geo"
+    # Load the Default User hive to modify it
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Loading Default User hive"
+    $defaultUserHive = "C:\Users\Default\NTUSER.DAT"
+    reg load "HKU\DefaultUser" $defaultUserHive 2>&1 | Out-Null
+    Start-Sleep -Seconds 2
+    
+    # Set Region in Default User Profile (applies to all new users)
+    $regPath = "Registry::HKU\DefaultUser\Control Panel\International\Geo"
     if (-Not (Test-Path -Path $regPath)) {
         New-Item -Path $regPath -Force | Out-Null
     }
-    New-ItemProperty -Path $regPath -Name "Nation" -Value $GeoID -PropertyType String -Force
+    New-ItemProperty -Path $regPath -Name "Nation" -Value $GeoID -PropertyType String -Force | Out-Null
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Set Nation=$GeoID in Default User hive"
+    
+    # Unload the Default User hive
+    [gc]::Collect()
+    Start-Sleep -Seconds 2
+    reg unload "HKU\DefaultUser" 2>&1 | Out-Null
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Unloaded Default User hive"
+    
+    # Set system-wide GeoID for the welcome screen and new user defaults
+    # This ensures the setting applies before first user login
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Setting system-wide GeoID"
     Set-WinHomeLocation -GeoId $GeoID
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
+    
+    # Also set it in the .DEFAULT hive (for system context)
+    $regPathDefault = "Registry::HKU\.DEFAULT\Control Panel\International\Geo"
+    if (-Not (Test-Path -Path $regPathDefault)) {
+        New-Item -Path $regPathDefault -Force | Out-Null
+    }
+    New-ItemProperty -Path $regPathDefault -Name "Nation" -Value $GeoID -PropertyType String -Force | Out-Null
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Set Nation=$GeoID in .DEFAULT hive"
+    
+    # Set the system default location
+    # This registry key controls the default for new users
+    $controlSetPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language"
+    if (Test-Path -Path $controlSetPath) {
+        Set-ItemProperty -Path $controlSetPath -Name "InstallLanguage" -Value ([System.Globalization.CultureInfo]::GetCultureInfo((Get-WinSystemLocale).Name).LCID).ToString("X4") -Force -ErrorAction SilentlyContinue
+    }
+    
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed for GeoID: $GeoID"
   }
   catch {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateRegionSettings: Error occurred: [$($_.Exception.Message)]"
+      # Try to unload the hive if it's still loaded
+      try {
+        [gc]::Collect()
+        Start-Sleep -Seconds 1
+        reg unload "HKU\DefaultUser" 2>&1 | Out-Null
+      } catch {}
       Exit 1
   }
 }
@@ -203,6 +241,11 @@ try {
 
   $GeoID = (new-object System.Globalization.RegionInfo($languageTag.Split("-")[1])).GeoId
   UpdateRegionSettings($GeoID)
+
+  # Copy user international settings to system for welcome screen and new users
+  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Copying user international settings to system ***"
+  Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
+  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Successfully copied settings to welcome screen and new user defaults ***"
 } 
 catch {
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
