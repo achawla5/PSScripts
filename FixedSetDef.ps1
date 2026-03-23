@@ -9,7 +9,7 @@
 
 [CmdletBinding()]
   Param (
-       # [Parameter(Mandatory)]
+        # [Parameter(Mandatory)]
         [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)", "English (Australia)", "English (United States)")]
         [string]$Language = "French (France)"
 )
@@ -74,57 +74,14 @@ function UpdateRegionSettings($GeoID)
     {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
     }
-    
-    # Load the Default User hive to modify it
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Loading Default User hive"
-    $defaultUserHive = "C:\Users\Default\NTUSER.DAT"
-    reg load "HKU\DefaultUser" $defaultUserHive 2>&1 | Out-Null
-    Start-Sleep -Seconds 2
-    
-    # Set Region in Default User Profile (applies to all new users)
-    $regPath = "Registry::HKU\DefaultUser\Control Panel\International\Geo"
-    if (-Not (Test-Path -Path $regPath)) {
-        New-Item -Path $regPath -Force | Out-Null
-    }
-    New-ItemProperty -Path $regPath -Name "Nation" -Value $GeoID -PropertyType String -Force | Out-Null
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Set Nation=$GeoID in Default User hive"
-    
-    # Unload the Default User hive
-    [gc]::Collect()
-    Start-Sleep -Seconds 2
-    reg unload "HKU\DefaultUser" 2>&1 | Out-Null
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Unloaded Default User hive"
-    
-    # Set system-wide GeoID for the welcome screen and new user defaults
-    # This ensures the setting applies before first user login
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Setting system-wide GeoID"
+
+    #Set Region in Default User Profile (applies to all new users)
+    New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
     Set-WinHomeLocation -GeoId $GeoID
-    
-    # Also set it in the .DEFAULT hive (for system context)
-    $regPathDefault = "Registry::HKU\.DEFAULT\Control Panel\International\Geo"
-    if (-Not (Test-Path -Path $regPathDefault)) {
-        New-Item -Path $regPathDefault -Force | Out-Null
-    }
-    New-ItemProperty -Path $regPathDefault -Name "Nation" -Value $GeoID -PropertyType String -Force | Out-Null
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Set Nation=$GeoID in .DEFAULT hive"
-    
-    # Set the system default location
-    # This registry key controls the default for new users
-    $controlSetPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language"
-    if (Test-Path -Path $controlSetPath) {
-        Set-ItemProperty -Path $controlSetPath -Name "InstallLanguage" -Value ([System.Globalization.CultureInfo]::GetCultureInfo((Get-WinSystemLocale).Name).LCID).ToString("X4") -Force -ErrorAction SilentlyContinue
-    }
-    
-    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed for GeoID: $GeoID"
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
   }
   catch {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateRegionSettings: Error occurred: [$($_.Exception.Message)]"
-      # Try to unload the hive if it's still loaded
-      try {
-        [gc]::Collect()
-        Start-Sleep -Seconds 1
-        reg unload "HKU\DefaultUser" 2>&1 | Out-Null
-      } catch {}
       Exit 1
   }
 }

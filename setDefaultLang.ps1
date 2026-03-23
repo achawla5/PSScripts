@@ -9,9 +9,9 @@
 
 [CmdletBinding()]
   Param (
-       # [Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [ValidateSet("Arabic (Saudi Arabia)","Bulgarian (Bulgaria)","Chinese (Simplified, China)","Chinese (Traditional, Taiwan)","Croatian (Croatia)","Czech (Czech Republic)","Danish (Denmark)","Dutch (Netherlands)", "English (United Kingdom)", "Estonian (Estonia)", "Finnish (Finland)", "French (Canada)", "French (France)", "German (Germany)", "Greek (Greece)", "Hebrew (Israel)", "Hungarian (Hungary)", "Italian (Italy)", "Japanese (Japan)", "Korean (Korea)", "Latvian (Latvia)", "Lithuanian (Lithuania)", "Norwegian, Bokmål (Norway)", "Polish (Poland)", "Portuguese (Brazil)", "Portuguese (Portugal)", "Romanian (Romania)", "Russian (Russia)", "Serbian (Latin, Serbia)", "Slovak (Slovakia)", "Slovenian (Slovenia)", "Spanish (Mexico)", "Spanish (Spain)", "Swedish (Sweden)", "Thai (Thailand)", "Turkish (Turkey)", "Ukrainian (Ukraine)", "English (Australia)", "English (United States)")]
-        [string]$Language = "French (France)"
+        [string]$Language
 )
 
 function Get-RegionInfo($Name='*')
@@ -74,14 +74,9 @@ function UpdateRegionSettings($GeoID)
     {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
     }
-    
+
     #Set Region in Default User Profile (applies to all new users)
-    # Ensure the registry path exists before creating the property
-    $regPath = "HKU\.DEFAULT\Control Panel\International\Geo"
-    if (-Not (Test-Path -Path $regPath)) {
-        New-Item -Path $regPath -Force | Out-Null
-    }
-    New-ItemProperty -Path $regPath -Name "Nation" -Value $GeoID -PropertyType String -Force
+    New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
     Set-WinHomeLocation -GeoId $GeoID
     Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
   }
@@ -203,6 +198,11 @@ try {
 
   $GeoID = (new-object System.Globalization.RegionInfo($languageTag.Split("-")[1])).GeoId
   UpdateRegionSettings($GeoID)
+
+  # Copy user international settings to system for welcome screen and new users
+  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Copying user international settings to system ***"
+  Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
+  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Successfully copied settings to welcome screen and new user defaults ***"
 } 
 catch {
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
