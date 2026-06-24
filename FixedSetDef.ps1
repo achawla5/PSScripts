@@ -61,7 +61,7 @@ function UpdateUserLanguageList($languageTag)
   }
 }
 
-function UpdateRegionSettings($GeoID) 
+function UpdateRegionSettings($GeoID, $GeoName)
 {
   try {
     try {
@@ -75,14 +75,77 @@ function UpdateRegionSettings($GeoID)
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Try deleting reg key failed with error: [$($_.Exception.Message)]"
     }
 
+    # Ensure HKU is available as a PSDrive
+    if (-not (Get-PSDrive -Name HKU -ErrorAction SilentlyContinue)) {
+        New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS | Out-Null
+    }
+
     #Set Region in Default User Profile (applies to all new users)
-    New-ItemProperty -Path "HKU\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
+    New-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\International\Geo" -Name "Nation" -Value $GeoID -PropertyType String -Force
+    if (-not [string]::IsNullOrEmpty($GeoName)) {
+        New-ItemProperty -Path "HKU:\.DEFAULT\Control Panel\International\Geo" -Name "Name" -Value $GeoName -PropertyType String -Force
+    }
     Set-WinHomeLocation -GeoId $GeoID
     Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - Region update completed."
   }
   catch {
       Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateRegionSettings: Error occurred: [$($_.Exception.Message)]"
       Exit 1
+  }
+}
+
+function UpdateDefaultUserProfileRegion($GeoID, $GeoName)
+{
+  # Windows 10 fallback for Copy-UserInternationalSettingsToSystem.
+  # Loads C:\Users\Default\NTUSER.DAT and writes the Geo Name/Nation so that
+  # newly-created user profiles inherit the configured region.
+  $defaultHivePath = "C:\Users\Default\NTUSER.DAT"
+  $tempHiveKey     = "HKU\AVDDefaultUserHive"
+  $hiveLoaded      = $false
+
+  try {
+    if (-not (Test-Path -Path $defaultHivePath)) {
+      Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - Default user hive not found at $defaultHivePath, skipping."
+      return
+    }
+
+    Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - Loading default user hive from $defaultHivePath"
+    $loadResult = & reg.exe load $tempHiveKey $defaultHivePath 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - reg load failed: $loadResult"
+        return
+    }
+    $hiveLoaded = $true
+
+    if (-not (Get-PSDrive -Name HKU -ErrorAction SilentlyContinue)) {
+        New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS | Out-Null
+    }
+
+    $geoKey = "HKU:\AVDDefaultUserHive\Control Panel\International\Geo"
+    if (-not (Test-Path -Path $geoKey)) {
+        New-Item -Path $geoKey -Force | Out-Null
+    }
+
+    New-ItemProperty -Path $geoKey -Name "Nation" -Value $GeoID -PropertyType String -Force | Out-Null
+    if (-not [string]::IsNullOrEmpty($GeoName)) {
+        New-ItemProperty -Path $geoKey -Name "Name" -Value $GeoName -PropertyType String -Force | Out-Null
+    }
+
+    Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - Default user profile region updated (Name=$GeoName, Nation=$GeoID)."
+  }
+  catch {
+    Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateDefaultUserProfileRegion: Error occurred: [$($_.Exception.Message)]"
+  }
+  finally {
+    if ($hiveLoaded) {
+        # Force GC so the hive isn't held open by .NET registry handles before unloading.
+        [gc]::Collect()
+        [gc]::WaitForPendingFinalizers()
+        $unloadResult = & reg.exe unload $tempHiveKey 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - reg unload failed: $unloadResult"
+        }
+    }
   }
 }
 
@@ -197,12 +260,23 @@ try {
   Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
   $GeoID = (new-object System.Globalization.RegionInfo($languageTag.Split("-")[1])).GeoId
-  UpdateRegionSettings($GeoID)
+  $GeoName = (new-object System.Globalization.RegionInfo($languageTag.Split("-")[1])).Name
+  UpdateRegionSettings -GeoID $GeoID -GeoName $GeoName
 
-  # Copy user international settings to system for welcome screen and new users
-  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Copying user international settings to system ***"
-  Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
-  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Successfully copied settings to welcome screen and new user defaults ***"
+  # Copy user international settings to system for welcome screen and new users.
+  # Copy-UserInternationalSettingsToSystem is only available on Windows 11 / Server 2022+.
+  # On Windows 10 we fall back to manually updating HKU\.DEFAULT and the Default User
+  # NTUSER.DAT so newly-provisioned profiles inherit the configured region.
+  $osBuild = [System.Environment]::OSVersion.Version.Build
+  if ($osBuild -ge 22000 -and (Get-Command -Name Copy-UserInternationalSettingsToSystem -ErrorAction SilentlyContinue)) {
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Windows 11 detected (build $osBuild). Copying user international settings to system ***"
+    Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Successfully copied settings to welcome screen and new user defaults ***"
+  }
+  else {
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Windows 10 detected (build $osBuild). Applying registry-based fallback for default user region ***"
+    UpdateDefaultUserProfileRegion -GeoID $GeoID -GeoName $GeoName
+  }
 } 
 catch {
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
