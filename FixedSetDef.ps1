@@ -94,59 +94,426 @@ function UpdateRegionSettings($GeoID, $GeoName)
   }
 }
 
-function UpdateDefaultUserProfileRegion($GeoID, $GeoName)
-{
-  # Windows 10 fallback for Copy-UserInternationalSettingsToSystem.
-  # Loads C:\Users\Default\NTUSER.DAT and writes the Geo Name/Nation so that
-  # newly-created user profiles inherit the configured region.
-  $defaultHivePath = "C:\Users\Default\NTUSER.DAT"
-  $tempHiveKey     = "HKU\AVDDefaultUserHive"
-  $hiveLoaded      = $false
+# =============================================================================
+# Windows-team compat: Copy-UserInternationalSettingsToSystem (NewUser)
+# -----------------------------------------------------------------------------
+# Source: Copy-UserInternationalSettingsToSystemCompat.ps1 (shared by the
+# Windows internationalization team). Preserves 1:1 behavior of the Win11
+# Copy-UserInternationalSettingsToSystem -NewUser $true call on down-level
+# Windows 10 SKUs by:
+#   1. Preferring the native intl.cpl!IntlCopyInternationalSettings entry point
+#      when available.
+#   2. Falling back to copying HKCU\Control Panel\International into
+#      C:\Users\Default\NTUSER.DAT, invoking input.dll ordinal 105
+#      (SaveDefaultUserInputSettings) to persist keyboard/input state, and
+#      copying PreferredUILanguages + LanguageConfiguration entries.
+# =============================================================================
 
-  try {
-    if (-not (Test-Path -Path $defaultHivePath)) {
-      Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - Default user hive not found at $defaultHivePath, skipping."
-      return
-    }
-
-    Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - Loading default user hive from $defaultHivePath"
-    $loadResult = & reg.exe load $tempHiveKey $defaultHivePath 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - reg load failed: $loadResult"
+function Add-IntlNativeMethods {
+    if ('CopyUserIntlSettings.NativeMethods' -as [type]) {
         return
     }
-    $hiveLoaded = $true
 
-    if (-not (Get-PSDrive -Name HKU -ErrorAction SilentlyContinue)) {
-        New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS | Out-Null
+    Add-Type -Language CSharp -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+namespace CopyUserIntlSettings
+{
+    public static class NativeMethods
+    {
+        [DllImport("intl.cpl", EntryPoint = "IntlCopyInternationalSettings", ExactSpelling = true, SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern UInt32 IntlCopyInternationalSettings(
+            [MarshalAs(UnmanagedType.Bool)] bool copyToWelcomeScreenAndSystemAccounts,
+            [MarshalAs(UnmanagedType.Bool)] bool copyToNewUser);
+    }
+}
+"@
+}
+
+function Add-InputNativeMethods {
+    if ('CopyUserIntlSettings.InputNativeMethods' -as [type]) {
+        return
     }
 
-    $geoKey = "HKU:\AVDDefaultUserHive\Control Panel\International\Geo"
-    if (-not (Test-Path -Path $geoKey)) {
-        New-Item -Path $geoKey -Force | Out-Null
-    }
+    Add-Type -Language CSharp -TypeDefinition @"
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 
-    New-ItemProperty -Path $geoKey -Name "Nation" -Value $GeoID -PropertyType String -Force | Out-Null
-    if (-not [string]::IsNullOrEmpty($GeoName)) {
-        New-ItemProperty -Path $geoKey -Name "Name" -Value $GeoName -PropertyType String -Force | Out-Null
-    }
+namespace CopyUserIntlSettings
+{
+    public static class InputNativeMethods
+    {
+        private const UInt32 LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x00000800;
+        private const Int32 ERROR_INVALID_PARAMETER = 87;
+        private static readonly IntPtr HKEY_CURRENT_USER = new IntPtr(unchecked((int)0x80000001));
 
-    Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - Default user profile region updated (Name=$GeoName, Nation=$GeoID)."
-  }
-  catch {
-    Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateDefaultUserProfileRegion: Error occurred: [$($_.Exception.Message)]"
-  }
-  finally {
-    if ($hiveLoaded) {
-        # Force GC so the hive isn't held open by .NET registry handles before unloading.
-        [gc]::Collect()
-        [gc]::WaitForPendingFinalizers()
-        $unloadResult = & reg.exe unload $tempHiveKey 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "***AVD AIB CUSTOMIZER PHASE: Set default Language - reg unload failed: $unloadResult"
+        [DllImport("kernel32.dll", EntryPoint = "LoadLibraryExW", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr LoadLibraryEx(string fileName, IntPtr fileHandle, UInt32 flags);
+
+        [DllImport("kernel32.dll", EntryPoint = "GetProcAddress", SetLastError = true)]
+        private static extern IntPtr GetProcAddressByOrdinal(IntPtr module, IntPtr ordinal);
+
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        private delegate bool SaveDefaultUserInputSettingsDelegate(IntPtr parentWindow, IntPtr sourceRegistryKey);
+
+        public static bool IsSaveDefaultUserInputSettingsAvailable()
+        {
+            IntPtr inputDll = LoadInputDll();
+            return GetProcAddressByOrdinal(inputDll, new IntPtr(105)) != IntPtr.Zero;
+        }
+
+        public static void SaveDefaultUserInputSettings()
+        {
+            IntPtr inputDll = LoadInputDll();
+            IntPtr procedure = GetProcAddressByOrdinal(inputDll, new IntPtr(105));
+            if (procedure == IntPtr.Zero)
+            {
+                throw new EntryPointNotFoundException("input.dll ordinal 105 (SaveDefaultUserInputSettings) was not found.");
+            }
+
+            SaveDefaultUserInputSettingsDelegate saveDefaultUserInputSettings =
+                (SaveDefaultUserInputSettingsDelegate)Marshal.GetDelegateForFunctionPointer(
+                    procedure,
+                    typeof(SaveDefaultUserInputSettingsDelegate));
+
+            if (!saveDefaultUserInputSettings(IntPtr.Zero, HKEY_CURRENT_USER))
+            {
+                throw new Win32Exception(ERROR_INVALID_PARAMETER);
+            }
+        }
+
+        private static IntPtr LoadInputDll()
+        {
+            IntPtr inputDll = LoadLibraryEx("input.dll", IntPtr.Zero, LOAD_LIBRARY_SEARCH_SYSTEM32);
+            if (inputDll == IntPtr.Zero)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Unable to load input.dll from System32.");
+            }
+
+            return inputDll;
         }
     }
-  }
+}
+"@
+}
+
+function Test-IntlNativeEntryPoint {
+    Add-IntlNativeMethods
+
+    try {
+        [void][CopyUserIntlSettings.NativeMethods]::IntlCopyInternationalSettings($false, $false)
+        return $true
+    }
+    catch [System.EntryPointNotFoundException] {
+        return $false
+    }
+}
+
+function Test-InputDllSaveDefaultUserInputSettings {
+    Add-InputNativeMethods
+    return [CopyUserIntlSettings.InputNativeMethods]::IsSaveDefaultUserInputSettingsAvailable()
+}
+
+function Invoke-IntlCopyInternationalSettingsForNewUser {
+    try {
+        return [CopyUserIntlSettings.NativeMethods]::IntlCopyInternationalSettings($false, $true)
+    }
+    catch {
+        $baseException = $_.Exception.GetBaseException()
+        throw "Unable to call intl.cpl!IntlCopyInternationalSettings for NewUser. $($baseException.GetType().FullName): $($baseException.Message)"
+    }
+}
+
+function Invoke-InputDllSaveDefaultUserInputSettings {
+    if (-not (Test-InputDllSaveDefaultUserInputSettings)) {
+        throw 'input.dll ordinal 105 (SaveDefaultUserInputSettings) is not available. The Win10 fallback cannot preserve 1:1 NewUser input-settings behavior without it.'
+    }
+
+    [CopyUserIntlSettings.InputNativeMethods]::SaveDefaultUserInputSettings()
+}
+
+function Copy-RegistryTree {
+    param(
+        [Parameter(Mandatory = $true)]
+        [Microsoft.Win32.RegistryKey]$SourceKey,
+
+        [Parameter(Mandatory = $true)]
+        [Microsoft.Win32.RegistryKey]$DestinationKey
+    )
+
+    foreach ($valueName in $SourceKey.GetValueNames()) {
+        $valueKind = $SourceKey.GetValueKind($valueName)
+        $value = $SourceKey.GetValue($valueName, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+        $DestinationKey.SetValue($valueName, $value, $valueKind)
+    }
+
+    foreach ($subKeyName in $SourceKey.GetSubKeyNames()) {
+        $sourceSubKey = $SourceKey.OpenSubKey($subKeyName, $false)
+        $destinationSubKey = $DestinationKey.CreateSubKey($subKeyName)
+        try {
+            Copy-RegistryTree -SourceKey $sourceSubKey -DestinationKey $destinationSubKey
+        }
+        finally {
+            if ($null -ne $destinationSubKey) {
+                $destinationSubKey.Dispose()
+            }
+            if ($null -ne $sourceSubKey) {
+                $sourceSubKey.Dispose()
+            }
+        }
+    }
+}
+
+function Copy-CurrentUserSubKeyToUsersHive {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceSubKeyPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$TargetUsersSubKeyPath
+    )
+
+    $sourceKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($SourceSubKeyPath, $false)
+    if ($null -eq $sourceKey) {
+        Write-Verbose "Source key HKCU\$SourceSubKeyPath does not exist."
+        return
+    }
+
+    try {
+        $usersHive = [Microsoft.Win32.Registry]::Users
+        $usersHive.DeleteSubKeyTree($TargetUsersSubKeyPath, $false)
+
+        $destinationKey = $usersHive.CreateSubKey($TargetUsersSubKeyPath)
+        try {
+            Copy-RegistryTree -SourceKey $sourceKey -DestinationKey $destinationKey
+        }
+        finally {
+            if ($null -ne $destinationKey) {
+                $destinationKey.Dispose()
+            }
+        }
+    }
+    finally {
+        $sourceKey.Dispose()
+    }
+}
+
+function Get-CurrentUserRegistryValue {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceSubKeyPath,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$SourceValueNames
+    )
+
+    $sourceKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($SourceSubKeyPath, $false)
+    if ($null -eq $sourceKey) {
+        return $null
+    }
+
+    try {
+        foreach ($sourceValueName in $SourceValueNames) {
+            $value = $sourceKey.GetValue($sourceValueName, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+            if ($null -ne $value) {
+                return [pscustomobject]@{
+                    Name = $sourceValueName
+                    Value = $value
+                    Kind = $sourceKey.GetValueKind($sourceValueName)
+                }
+            }
+        }
+
+        return $null
+    }
+    finally {
+        $sourceKey.Dispose()
+    }
+}
+
+function Get-FirstMultiStringEntry {
+    param(
+        [Parameter(Mandatory = $true)]
+        $Value
+    )
+
+    if ($Value -is [string[]]) {
+        if ($Value.Count -eq 0) {
+            return $null
+        }
+
+        return [string]$Value[0]
+    }
+
+    return [string]$Value
+}
+
+function Invoke-WithDefaultUserHive {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$Action
+    )
+
+    $tempHiveName = 'CopyUserIntlSettingsDefaultUser'
+    $ntUserPath = Join-Path $env:SystemDrive 'Users\Default\NTUSER.DAT'
+
+    if (-not (Test-Path $ntUserPath)) {
+        throw "Default User hive was not found at $ntUserPath."
+    }
+
+    if (Test-Path "Registry::HKEY_USERS\$tempHiveName") {
+        $preUnloadOutput = & reg.exe unload "HKU\$tempHiveName" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to unload stale Default User hive mount HKU\$tempHiveName. reg.exe exit code $LASTEXITCODE. $preUnloadOutput"
+        }
+    }
+
+    $loadOutput = & reg.exe load "HKU\$tempHiveName" $ntUserPath 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to load Default User hive '$ntUserPath'. reg.exe exit code $LASTEXITCODE. $loadOutput"
+    }
+
+    $actionFailed = $false
+    try {
+        try {
+            & $Action $tempHiveName
+        }
+        catch {
+            $actionFailed = $true
+            throw
+        }
+    }
+    finally {
+        [gc]::Collect()
+        [gc]::WaitForPendingFinalizers()
+        $unloadOutput = & reg.exe unload "HKU\$tempHiveName" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            $unloadError = "Failed to unload Default User hive. reg.exe exit code $LASTEXITCODE. $unloadOutput"
+            if ($actionFailed) {
+                Write-Warning $unloadError
+            }
+            else {
+                throw $unloadError
+            }
+        }
+    }
+}
+
+function Copy-CurrentUserSubKeyToDefaultUserHive {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceSubKeyPath
+    )
+
+    Invoke-WithDefaultUserHive {
+        param([Parameter(Mandatory = $true)][string]$TempHiveName)
+
+        Copy-CurrentUserSubKeyToUsersHive `
+            -SourceSubKeyPath $SourceSubKeyPath `
+            -TargetUsersSubKeyPath "$TempHiveName\$SourceSubKeyPath"
+    }
+}
+
+function Copy-UserInterfaceSettingsToDefaultUserHive {
+    $uiLanguageValue = Get-CurrentUserRegistryValue `
+        -SourceSubKeyPath 'Control Panel\Desktop' `
+        -SourceValueNames @('PreferredUILanguagesPending', 'PreferredUILanguages')
+
+    if ($null -eq $uiLanguageValue) {
+        Write-Verbose 'No current-user PreferredUILanguagesPending or PreferredUILanguages value was found.'
+        return
+    }
+
+    if ($uiLanguageValue.Kind -ne [Microsoft.Win32.RegistryValueKind]::MultiString) {
+        Write-Verbose "Skipping UI language value '$($uiLanguageValue.Name)' because it is $($uiLanguageValue.Kind), not REG_MULTI_SZ."
+        return
+    }
+
+    $uiLanguage = Get-FirstMultiStringEntry -Value $uiLanguageValue.Value
+    if ([string]::IsNullOrEmpty($uiLanguage)) {
+        Write-Verbose 'The current-user UI language value is empty.'
+        return
+    }
+
+    $uiFallbackValue = Get-CurrentUserRegistryValue `
+        -SourceSubKeyPath 'Control Panel\Desktop\LanguageConfigurationPending' `
+        -SourceValueNames @($uiLanguage)
+
+    if ($null -eq $uiFallbackValue) {
+        $uiFallbackValue = Get-CurrentUserRegistryValue `
+            -SourceSubKeyPath 'Control Panel\Desktop\LanguageConfiguration' `
+            -SourceValueNames @($uiLanguage)
+    }
+
+    Invoke-WithDefaultUserHive {
+        param([Parameter(Mandatory = $true)][string]$TempHiveName)
+
+        $desktopKey = [Microsoft.Win32.Registry]::Users.CreateSubKey("$TempHiveName\Control Panel\Desktop")
+        try {
+            $desktopKey.SetValue('PreferredUILanguages', [string[]]@($uiLanguage), [Microsoft.Win32.RegistryValueKind]::MultiString)
+        }
+        finally {
+            if ($null -ne $desktopKey) {
+                $desktopKey.Dispose()
+            }
+        }
+
+        if ($null -ne $uiFallbackValue) {
+            if ($uiFallbackValue.Kind -ne [Microsoft.Win32.RegistryValueKind]::MultiString) {
+                Write-Verbose "Skipping UI fallback value '$($uiFallbackValue.Name)' because it is $($uiFallbackValue.Kind), not REG_MULTI_SZ."
+                return
+            }
+
+            $languageConfigurationKey = [Microsoft.Win32.Registry]::Users.CreateSubKey("$TempHiveName\Control Panel\Desktop\LanguageConfiguration")
+            try {
+                $languageConfigurationKey.SetValue($uiLanguage, $uiFallbackValue.Value, [Microsoft.Win32.RegistryValueKind]::MultiString)
+            }
+            finally {
+                if ($null -ne $languageConfigurationKey) {
+                    $languageConfigurationKey.Dispose()
+                }
+            }
+        }
+    }
+}
+
+function Invoke-NewUserRegistryFallbackCopy {
+    Copy-CurrentUserSubKeyToDefaultUserHive -SourceSubKeyPath 'Control Panel\International'
+    Invoke-InputDllSaveDefaultUserInputSettings
+    Copy-UserInterfaceSettingsToDefaultUserHive
+}
+
+function Invoke-CopyUserIntlSettingsCompatForNewUser {
+    # Entry point invoked by the main script. Uses Set-StrictMode/ErrorAction
+    # locally to match the Windows-team script's assumptions without leaking
+    # them into the outer AIB customizer scope.
+    Set-StrictMode -Version 2.0
+    $ErrorActionPreference = 'Stop'
+
+    if ([Environment]::Is64BitOperatingSystem -and -not [Environment]::Is64BitProcess) {
+        throw 'Copy-UserInternationalSettingsToSystemCompat requires 64-bit Windows PowerShell on 64-bit Windows.'
+    }
+
+    try {
+        if (Test-IntlNativeEntryPoint) {
+            $result = Invoke-IntlCopyInternationalSettingsForNewUser
+            if ($result -ne 0) {
+                $message = (New-Object ComponentModel.Win32Exception([int]$result)).Message
+                throw "IntlCopyInternationalSettings failed with Win32 error $result ($message)."
+            }
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Copied current-user international settings to the default new-user profile via intl.cpl!IntlCopyInternationalSettings ***"
+        }
+        else {
+            Invoke-NewUserRegistryFallbackCopy
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Copied current-user international settings to the default new-user profile via NewUser registry/input.dll fallback ***"
+        }
+    }
+    catch {
+        Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Invoke-CopyUserIntlSettingsCompatForNewUser failed: [$($_.Exception.Message)] ***"
+        throw
+    }
 }
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -264,18 +631,21 @@ try {
   UpdateRegionSettings -GeoID $GeoID -GeoName $GeoName
 
   # Copy user international settings to system for welcome screen and new users.
-  # Copy-UserInternationalSettingsToSystem is only available on Windows 11 / Server 2022+.
-  # On Windows 10 we fall back to manually updating HKU\.DEFAULT and the Default User
-  # NTUSER.DAT so newly-provisioned profiles inherit the configured region.
+  # On Windows 11 / Server 2022+ the built-in cmdlet handles both WelcomeScreen and NewUser.
+  # On Windows 10 the cmdlet is missing, so we call the Windows-team compat helper which:
+  #   1) Prefers the native intl.cpl!IntlCopyInternationalSettings when present, else
+  #   2) Copies HKCU\Control Panel\International into Default\NTUSER.DAT, invokes
+  #      input.dll ordinal 105, and copies PreferredUILanguages/LanguageConfiguration.
+  # UpdateRegionSettings above already handles the Welcome Screen (HKU\.DEFAULT\Geo) piece.
   $osBuild = [System.Environment]::OSVersion.Version.Build
   if ($osBuild -ge 22000 -and (Get-Command -Name Copy-UserInternationalSettingsToSystem -ErrorAction SilentlyContinue)) {
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Windows 11 detected (build $osBuild). Copying user international settings to system ***"
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Windows 11 / Server 2022+ detected (build $osBuild). Copying user international settings to system ***"
     Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Successfully copied settings to welcome screen and new user defaults ***"
   }
   else {
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Windows 10 detected (build $osBuild). Applying registry-based fallback for default user region ***"
-    UpdateDefaultUserProfileRegion -GeoID $GeoID -GeoName $GeoName
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Pre-Windows 11 detected (build $osBuild). Invoking Windows-team NewUser compat helper ***"
+    Invoke-CopyUserIntlSettingsCompatForNewUser
   }
 } 
 catch {
