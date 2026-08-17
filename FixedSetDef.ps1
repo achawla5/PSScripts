@@ -838,9 +838,12 @@ try {
   # Enable language Keyboard for Windows.
   UpdateUserLanguageList -languageTag $LanguageTag
 
-  # Set the Windows display language for the current user (input language and system preferred
-  # language are set above; this adds the current-user display language).
-  UpdateCurrentUserDisplayLanguage -languageTag $LanguageTag
+  # NOTE: Do NOT set Set-WinUILanguageOverride on the current (build/Packer) user. On Win10
+  # (build 19045) that queues a pending full display-language switch that finalizes during the
+  # post-customization reboot's first logon, blocking the WinRM session Packer needs and causing
+  # "Timeout waiting for machine to restart". New users still receive the display language via the
+  # NewUser compat copy of PreferredUILanguages into C:\Users\Default\NTUSER.DAT below, so DMA
+  # parity for new users/region is preserved without stalling the build account's reboot logon.
 
   Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
