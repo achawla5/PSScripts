@@ -61,6 +61,23 @@ function UpdateUserLanguageList($languageTag)
   }
 }
 
+function UpdateCurrentUserDisplayLanguage($languageTag)
+{
+  # Set the Windows DISPLAY language for the current user (the account running this script),
+  # alongside the input language (UpdateUserLanguageList) and system preferred UI language
+  # (Set-systempreferreduilanguage). Set-WinUILanguageOverride writes the current user's
+  # PreferredUILanguages and works on both Windows 10 and Windows 11. Takes effect at next
+  # sign-in and renders only if the language's display pack is installed (Install-Language above).
+  try {
+    Set-WinUILanguageOverride -Language $languageTag
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Set CURRENT user display language override to $languageTag (applies at next sign-in) ***"
+  }
+  catch
+  {
+    Write-Host "***Starting AVD AIB CUSTOMIZER PHASE: Set default Language - UpdateCurrentUserDisplayLanguage: Error occurred: [$($_.Exception.Message)]"
+  }
+}
+
 function UpdateRegionSettings($GeoID, $GeoName)
 {
   try {
@@ -104,8 +121,9 @@ function UpdateRegionSettings($GeoID, $GeoName)
 #   1. Preferring the native intl.cpl!IntlCopyInternationalSettings entry point
 #      when available.
 #   2. Falling back to copying HKCU\Control Panel\International into
-#      C:\Users\Default\NTUSER.DAT, invoking input.dll ordinal 105
-#      (SaveDefaultUserInputSettings) to persist keyboard/input state, and
+#      C:\Users\Default\NTUSER.DAT, invoking the named export
+#      input.dll!SaveDefaultUserInputSettings (ordinal 105) to persist
+#      keyboard/input state, and
 #      copying PreferredUILanguages + LanguageConfiguration entries.
 # =============================================================================
 
@@ -152,8 +170,28 @@ namespace CopyUserIntlSettings
         [DllImport("kernel32.dll", EntryPoint = "LoadLibraryExW", SetLastError = true, CharSet = CharSet.Unicode)]
         private static extern IntPtr LoadLibraryEx(string fileName, IntPtr fileHandle, UInt32 flags);
 
+        // input.dll!SaveDefaultUserInputSettings is a named -- but UNDOCUMENTED / unsupported --
+        // export. We resolve it by name first (stable, self-documenting, how Windows' own components
+        // resolve it) and fall back to ordinal 105 for any build that exports it by ordinal only.
+        // It remains an internal API with no support contract.
+        private const UInt16 SaveDefaultUserInputSettingsOrdinal = 105;
+
+        [DllImport("kernel32.dll", EntryPoint = "GetProcAddress", SetLastError = true, CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetProcAddressByName(IntPtr module, string procName);
+
         [DllImport("kernel32.dll", EntryPoint = "GetProcAddress", SetLastError = true)]
         private static extern IntPtr GetProcAddressByOrdinal(IntPtr module, IntPtr ordinal);
+
+        private static IntPtr ResolveSaveDefaultUserInputSettings(IntPtr module)
+        {
+            IntPtr procedure = GetProcAddressByName(module, "SaveDefaultUserInputSettings");
+            if (procedure == IntPtr.Zero)
+            {
+                procedure = GetProcAddressByOrdinal(module, new IntPtr(SaveDefaultUserInputSettingsOrdinal));
+            }
+
+            return procedure;
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.Winapi)]
         private delegate bool SaveDefaultUserInputSettingsDelegate(IntPtr parentWindow, IntPtr sourceRegistryKey);
@@ -161,16 +199,16 @@ namespace CopyUserIntlSettings
         public static bool IsSaveDefaultUserInputSettingsAvailable()
         {
             IntPtr inputDll = LoadInputDll();
-            return GetProcAddressByOrdinal(inputDll, new IntPtr(105)) != IntPtr.Zero;
+            return ResolveSaveDefaultUserInputSettings(inputDll) != IntPtr.Zero;
         }
 
         public static void SaveDefaultUserInputSettings()
         {
             IntPtr inputDll = LoadInputDll();
-            IntPtr procedure = GetProcAddressByOrdinal(inputDll, new IntPtr(105));
+            IntPtr procedure = ResolveSaveDefaultUserInputSettings(inputDll);
             if (procedure == IntPtr.Zero)
             {
-                throw new EntryPointNotFoundException("input.dll ordinal 105 (SaveDefaultUserInputSettings) was not found.");
+                throw new EntryPointNotFoundException("input.dll!SaveDefaultUserInputSettings (undocumented export, name and ordinal 105) was not found.");
             }
 
             SaveDefaultUserInputSettingsDelegate saveDefaultUserInputSettings =
@@ -228,7 +266,7 @@ function Invoke-IntlCopyInternationalSettingsForNewUser {
 
 function Invoke-InputDllSaveDefaultUserInputSettings {
     if (-not (Test-InputDllSaveDefaultUserInputSettings)) {
-        throw 'input.dll ordinal 105 (SaveDefaultUserInputSettings) is not available. The Win10 fallback cannot preserve 1:1 NewUser input-settings behavior without it.'
+        throw 'input.dll!SaveDefaultUserInputSettings (undocumented export) is not available. The Win10 fallback cannot preserve 1:1 NewUser input-settings behavior without it.'
     }
 
     [CopyUserIntlSettings.InputNativeMethods]::SaveDefaultUserInputSettings()
@@ -517,7 +555,139 @@ function Invoke-CopyUserIntlSettingsCompatForNewUser {
 }
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+# =============================================================================
+# DIAGNOSTICS - TestLangSetup.ps1
+# Console-only diagnostics, in parity with Akash's FixedSetDef.ps1 (plain
+# Write-Host, no file logging). We keep the extra diagnostic / version / summary
+# output, but it is written to the console just like every other AVD banner --
+# nothing is teed to C:\TestLangSetup.log or any other file.
+# =============================================================================
+$script:DefaultSnap = @{}
+$script:CopyMethod = '(not reached)'
+$script:InstallOutcome = '(not evaluated)'
+$script:InstallVerified = $null
+
+function Write-TestLog {
+    param([string]$Message, [string]$Level = 'INFO')
+    Write-Host "[TestLangSetup] [$Level] $Message"
+}
+
 Write-Host "*** Starting AVD AIB CUSTOMIZER PHASE: Set default Language ***"
+
+# Windows / environment version info.
+function Write-WindowsVersionInfo {
+    Write-TestLog "===== WINDOWS VERSION INFO =====" 'DIAG'
+    try {
+        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+        Write-TestLog "Caption: $($os.Caption)" 'DIAG'
+        Write-TestLog "Version: $($os.Version)  Build: $($os.BuildNumber)  Arch: $($os.OSArchitecture)" 'DIAG'
+        Write-TestLog "InstallDate: $($os.InstallDate)  LastBoot: $($os.LastBootUpTime)" 'DIAG'
+    } catch { Write-TestLog "Win32_OperatingSystem query failed: $($_.Exception.Message)" 'WARN' }
+    try {
+        $p = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction Stop
+        Write-TestLog "ProductName: $($p.ProductName)  DisplayVersion: $($p.DisplayVersion)  ReleaseId: $($p.ReleaseId)" 'DIAG'
+        Write-TestLog "CurrentBuild: $($p.CurrentBuild).$($p.UBR)  EditionID: $($p.EditionID)  InstallationType: $($p.InstallationType)" 'DIAG'
+    } catch { }
+    Write-TestLog ("OSVersion(.NET): {0}  x64OS={1}  x64Proc={2}  PS={3}" -f `
+        [Environment]::OSVersion.Version, [Environment]::Is64BitOperatingSystem, `
+        [Environment]::Is64BitProcess, $PSVersionTable.PSVersion) 'DIAG'
+    try {
+        $id = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $pr = New-Object Security.Principal.WindowsPrincipal($id)
+        $elev = $pr.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        Write-TestLog "User: $($id.Name)  SID: $($id.User.Value)  Elevated: $elev" 'DIAG'
+    } catch { }
+}
+
+# End-of-run summary comparing new-user display language before/after the copy.
+function Write-RunSummary {
+    Write-TestLog "===== RUN SUMMARY =====" 'SUMMARY'
+    Write-TestLog "Requested: '$Language'  Resolved tag: '$LanguageTag'  GeoID: '$GeoID'" 'SUMMARY'
+    Write-TestLog "Language pack install: $script:InstallOutcome" 'SUMMARY'
+    $verifyText = if ($null -eq $script:InstallVerified) { '(not checked)' }
+                  elseif ($script:InstallVerified) { "YES - '$LanguageTag' is present" }
+                  else { "NO - '$LanguageTag' is NOT present on this machine" }
+    Write-TestLog "Display language actually installed: $verifyText" 'SUMMARY'
+    Write-TestLog "Copy performed via: $script:CopyMethod" 'SUMMARY'
+    if ($script:DefaultSnap.ContainsKey('BEFORE-COMPAT-COPY') -and $script:DefaultSnap.ContainsKey('AFTER-COMPAT-COPY')) {
+        $b = $script:DefaultSnap['BEFORE-COMPAT-COPY']; $a = $script:DefaultSnap['AFTER-COMPAT-COPY']
+        Write-TestLog "Default profile BEFORE copy: Locale=[$($b.Locale)] Geo=[$($b.Nation)] PreferredUILanguages=[$($b.Pref)]" 'SUMMARY'
+        Write-TestLog "Default profile AFTER  copy: Locale=[$($a.Locale)] Geo=[$($a.Nation)] PreferredUILanguages=[$($a.Pref)]" 'SUMMARY'
+        if ("$($a.Pref)" -eq "$LanguageTag") {
+            Write-TestLog "RESULT: new-user display language = [$($a.Pref)] MATCHES expected [$LanguageTag] (OK)" 'SUMMARY'
+        } else {
+            Write-TestLog "RESULT: new-user display language = [$($a.Pref)] != expected [$LanguageTag] (MISMATCH / regression)" 'SUMMARY'
+            if ($false -eq $script:InstallVerified) {
+                Write-TestLog "LIKELY CAUSE: '$LanguageTag' was never installed (install outcome: $script:InstallOutcome). The copy propagated whatever the build user actually had - it did not lose the setting." 'SUMMARY'
+            }
+        }
+    } else {
+        Write-TestLog "Compat copy did not run (no before/after snapshot) - see earlier log for why." 'SUMMARY'
+    }
+}
+
+Write-WindowsVersionInfo
+
+# Is the target language actually installed as a display (MUI) language?
+# Get-InstalledLanguage only exists on Win11/Server2022+, so fall back to the MUI registry
+# key, which is present on every SKU and is what the display-language stack actually reads.
+function Test-LanguageInstalled {
+    param([string]$Tag)
+    try {
+        $inst = @(Get-InstalledLanguage -ErrorAction Stop | ForEach-Object { $_.LanguageId })
+        if ($inst -contains $Tag) { return $true }
+    } catch { }
+    $mui = @(Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Control\MUI\UILanguages' -ErrorAction SilentlyContinue |
+                Select-Object -ExpandProperty PSChildName)
+    return ($mui -contains $Tag)
+}
+
+# Snapshot of the CURRENT user + machine language state.
+function Write-LanguageState {
+    param([string]$Phase)
+    Write-TestLog "===== LANGUAGE STATE ($Phase) =====" 'DIAG'
+    Write-TestLog ("OS build={0} x64OS={1} x64Proc={2} PS={3} User={4}" -f `
+        [Environment]::OSVersion.Version.Build, [Environment]::Is64BitOperatingSystem, `
+        [Environment]::Is64BitProcess, $PSVersionTable.PSVersion, $env:USERNAME) 'DIAG'
+    try {
+        $inst = (Get-InstalledLanguage -ErrorAction Stop | ForEach-Object { $_.LanguageId }) -join ', '
+        Write-TestLog "Installed languages (Get-InstalledLanguage): $inst" 'DIAG'
+    } catch { Write-TestLog "Get-InstalledLanguage unavailable: $($_.Exception.Message)" 'DIAG' }
+    $mui = (Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Control\MUI\UILanguages' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty PSChildName) -join ', '
+    Write-TestLog "Installed display (MUI) packs: $mui" 'DIAG'
+    try { $list = (Get-WinUserLanguageList | ForEach-Object { $_.LanguageTag }) -join ', '; Write-TestLog "Current-user language list: $list" 'DIAG' } catch { }
+    $pend = (Get-ItemProperty 'HKCU:\Control Panel\Desktop' -Name PreferredUILanguagesPending -ErrorAction SilentlyContinue).PreferredUILanguagesPending -join ','
+    $pref = (Get-ItemProperty 'HKCU:\Control Panel\Desktop' -Name PreferredUILanguages -ErrorAction SilentlyContinue).PreferredUILanguages -join ','
+    Write-TestLog "Current-user HKCU PreferredUILanguagesPending=[$pend] PreferredUILanguages=[$pref]" 'DIAG'
+    try { Write-TestLog "Current-user WinUILanguageOverride: $((Get-WinUILanguageOverride).Name)" 'DIAG' } catch { }
+    try { Write-TestLog "Current-user HomeLocation GeoId: $((Get-WinHomeLocation).GeoId)" 'DIAG' } catch { }
+}
+
+# Snapshot of what NEW users will inherit (offline C:\Users\Default\NTUSER.DAT).
+function Write-DefaultProfileState {
+    param([string]$Phase)
+    Write-TestLog "===== DEFAULT PROFILE (new-user) STATE ($Phase) =====" 'DIAG'
+    $mount = 'TestLangSetup_Diag'
+    if (Test-Path "Registry::HKEY_USERS\$mount") {
+        & reg.exe unload "HKU\$mount" 2>&1 | Out-Null
+    }
+    & reg.exe load "HKU\$mount" 'C:\Users\Default\NTUSER.DAT' 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-TestLog "Could not load Default hive for diagnostics (exit $LASTEXITCODE)" 'WARN'; return }
+    $locale = (Get-ItemProperty "Registry::HKEY_USERS\$mount\Control Panel\International" -Name LocaleName -ErrorAction SilentlyContinue).LocaleName
+    $nation = (Get-ItemProperty "Registry::HKEY_USERS\$mount\Control Panel\International\Geo" -Name Nation -ErrorAction SilentlyContinue).Nation
+    $dpref = (Get-ItemProperty "Registry::HKEY_USERS\$mount\Control Panel\Desktop" -Name PreferredUILanguages -ErrorAction SilentlyContinue).PreferredUILanguages -join ','
+    $dpend = (Get-ItemProperty "Registry::HKEY_USERS\$mount\Control Panel\Desktop" -Name PreferredUILanguagesPending -ErrorAction SilentlyContinue).PreferredUILanguagesPending -join ','
+    Write-TestLog "Default profile: LocaleName=[$locale] Geo.Nation=[$nation] PreferredUILanguages=[$dpref] Pending=[$dpend]" 'DIAG'
+    $script:DefaultSnap[$Phase] = [pscustomobject]@{ Locale = $locale; Nation = $nation; Pref = $dpref; Pend = $dpend }
+    [gc]::Collect(); [gc]::WaitForPendingFinalizers()
+    $unloadOutput = & reg.exe unload "HKU\$mount" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        # The diagnostic must not leave the Default hive mounted: a lingering mount on the
+        # same NTUSER.DAT causes ERROR_SHARING_VIOLATION when the compat copy re-loads it.
+        Write-TestLog "Could not unload diagnostic Default hive HKU\$mount (exit $LASTEXITCODE): $unloadOutput" 'WARN'
+    }
+}
 
 $templateFilePathFolder = "C:\AVDImage"
 # Reference: https://learn.microsoft.com/en-gb/powershell/module/languagepackmanagement/set-systempreferreduilanguage?view=windowsserver2022-ps
@@ -581,6 +751,9 @@ try {
 
   $foundLanguage = $false;
 
+  Write-TestLog "Requested language: '$Language'  ->  resolved tag: '$LanguageTag'  GeoID: '$GeoID'" 'INFO'
+  Write-LanguageState 'BEFORE-INSTALL'
+
   try {
     #install language pack in case the provided language is not installed
     $installedLanguages = Get-InstalledLanguage
@@ -598,31 +771,76 @@ try {
   }
 
   if(-Not $foundLanguage) {
-    # retry in case we hit transient errors
-    for($i=1; $i -le 5; $i++) {
-        try {
-            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Attempt: $i ***"   
-            Install-Language -Language $LanguageTag -ErrorAction Stop
-            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Installed language $LanguageCode ***"   
-            break
+    # Install-Language comes from LanguagePackManagement (Win11/Server2022+ only). Distinguish
+    # "cmdlet absent on this OS" from "install genuinely failed" so the summary can say which.
+    if (-not (Get-Command -Name Install-Language -ErrorAction SilentlyContinue)) {
+        $script:InstallOutcome = 'CmdletNotAvailable (LanguagePackManagement is Win11/Server2022+ only)'
+        Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install-Language NOT available on this OS; skipping language-pack install ***"
+    }
+    else {
+        $installSucceeded = $false
+        # retry in case we hit transient errors
+        for($i=1; $i -le 5; $i++) {
+            try {
+                Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Attempt: $i ***"   
+                Install-Language -Language $LanguageTag -ErrorAction Stop
+                Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs -  Installed language $LanguageTag ***"   
+                $installSucceeded = $true
+                break
+            }
+            catch {
+                Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs - Exception occurred***"
+                Write-Host $PSItem.Exception
+                continue
+            }
         }
-        catch {
-            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs - Exception occurred***"
-            Write-Host $PSItem.Exception
-            continue
+        if ($installSucceeded) {
+            $script:InstallOutcome = 'Installed'
+        }
+        else {
+            $script:InstallOutcome = 'FAILED after 5 attempts'
+            Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Install language packs - ALL 5 ATTEMPTS FAILED for $LanguageTag ***"
         }
     }
   }
   else {
+     $script:InstallOutcome = 'AlreadyPresent'
      Write-Host "*** AVD AIB CUSTOMIZER PHASE : Set default language - Language pack for $LanguageTag is installed already***"
   }
+
+  # Re-verify independently of the install cmdlet's own reporting. This is the check that
+  # matters: if the display language is not actually present, the current user's pending UI
+  # language never becomes $LanguageTag, and the NewUser copy below will faithfully propagate
+  # en-US into the default profile - the exact shape of the reported new-user regression.
+  $script:InstallVerified = Test-LanguageInstalled -Tag $LanguageTag
+  if ($script:InstallVerified) {
+      Write-TestLog "Post-install verification: display language '$LanguageTag' IS present on this machine" 'INFO'
+  } else {
+      Write-TestLog "Post-install verification: display language '$LanguageTag' is NOT present - new users will NOT get it (install outcome: $script:InstallOutcome)" 'WARN'
+  }
   
-  Set-systempreferreduilanguage -Language $LanguageTag
+  # Set-SystemPreferredUILanguage / Install-Language / Get-InstalledLanguage come from the
+  # LanguagePackManagement module, which exists ONLY on Windows 11 / Server 2022+. On Windows 10
+  # they are "not recognized" and throw CommandNotFoundException, which (unguarded) aborts the whole
+  # script before our NewUser compat copy runs. Guard the Win11-only cmdlet so execution continues
+  # on Win10 and reaches Invoke-CopyUserIntlSettingsCompatForNewUser (the whole point of this harness).
+  if (Get-Command -Name Set-SystemPreferredUILanguage -ErrorAction SilentlyContinue) {
+    Set-systempreferreduilanguage -Language $LanguageTag
+    Write-TestLog "Set-SystemPreferredUILanguage -Language $LanguageTag succeeded" 'INFO'
+  } else {
+    Write-TestLog "Set-SystemPreferredUILanguage NOT available (LanguagePackManagement is Win11/Server2022+ only) - skipping on this OS; continuing to reach compat copy" 'WARN'
+  }
   Set-WinSystemLocale -SystemLocale $LanguageTag
   Set-Culture -CultureInfo $LanguageTag
+
+  Write-LanguageState 'AFTER-INSTALL-AND-SYSTEM-SET'
   
   # Enable language Keyboard for Windows.
   UpdateUserLanguageList -languageTag $LanguageTag
+
+  # Set the Windows display language for the current user (input language and system preferred
+  # language are set above; this adds the current-user display language).
+  UpdateCurrentUserDisplayLanguage -languageTag $LanguageTag
 
   Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - $Language with $LanguageTag has been set as the default System Preferred UI Language***"
 
@@ -631,22 +849,34 @@ try {
   UpdateRegionSettings -GeoID $GeoID -GeoName $GeoName
 
   # Copy user international settings to system for welcome screen and new users.
-  # On Windows 11 / Server 2022+ the built-in cmdlet handles both WelcomeScreen and NewUser.
-  # On Windows 10 the cmdlet is missing, so we call the Windows-team compat helper which:
-  #   1) Prefers the native intl.cpl!IntlCopyInternationalSettings when present, else
-  #   2) Copies HKCU\Control Panel\International into Default\NTUSER.DAT, invokes
-  #      input.dll ordinal 105, and copies PreferredUILanguages/LanguageConfiguration.
+  # Prefer the in-box Copy-UserInternationalSettingsToSystem cmdlet on Windows 11 / Server 2022+
+  # (build >= 22000) when it is present 
+  #   1) Prefers the native intl.cpl!IntlCopyInternationalSettings entry point when available.
+  #   2) Otherwise copies HKCU\Control Panel\International into Default\NTUSER.DAT, invokes
+  #      input.dll!SaveDefaultUserInputSettings, and copies PreferredUILanguages/LanguageConfiguration.
   # UpdateRegionSettings above already handles the Welcome Screen (HKU\.DEFAULT\Geo) piece.
   $osBuild = [System.Environment]::OSVersion.Version.Build
+  $cmdletAvailable = [bool](Get-Command -Name Copy-UserInternationalSettingsToSystem -ErrorAction SilentlyContinue)
+  Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - OS build $osBuild; in-box Copy-UserInternationalSettingsToSystem available: $cmdletAvailable ***"
+
+  Write-LanguageState 'BEFORE-COMPAT-COPY'
+  Write-DefaultProfileState 'BEFORE-COMPAT-COPY'
+
   if ($osBuild -ge 22000 -and (Get-Command -Name Copy-UserInternationalSettingsToSystem -ErrorAction SilentlyContinue)) {
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Windows 11 / Server 2022+ detected (build $osBuild). Copying user international settings to system ***"
+    $script:CopyMethod = 'in-box cmdlet Copy-UserInternationalSettingsToSystem'
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - In-box cmdlet present (build $osBuild). Copying user international settings to system via the cmdlet ***"
     Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Successfully copied settings to welcome screen and new user defaults ***"
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Successfully copied settings to welcome screen and new user defaults via the in-box cmdlet ***"
   }
   else {
-    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Pre-Windows 11 detected (build $osBuild). Invoking Windows-team NewUser compat helper ***"
+    $script:CopyMethod = 'Windows-team NewUser compat helper'
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - In-box cmdlet gate not satisfied (build $osBuild, available: $cmdletAvailable). Invoking Windows-team NewUser compat helper ***"
     Invoke-CopyUserIntlSettingsCompatForNewUser
+    Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Compat helper completed (NewUser copy to default profile) ***"
   }
+
+  Write-DefaultProfileState 'AFTER-COMPAT-COPY'
+  Write-LanguageState 'AFTER-COMPAT-COPY'
 } 
 catch {
     Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exception occurred***"
@@ -665,6 +895,9 @@ $stopwatch.Stop()
 $elapsedTime = $stopwatch.Elapsed
 Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Exit Code: $LASTEXITCODE ***"
 Write-Host "*** AVD AIB CUSTOMIZER PHASE: Set default Language - Time taken: $elapsedTime ***"
+
+Write-RunSummary
+Write-Host "*** TestLangSetup: run complete ***"
 
 
 #############
